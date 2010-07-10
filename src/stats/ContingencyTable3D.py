@@ -344,9 +344,6 @@ class ContingencyTable3D(object):
         if self.title == None:
             self.title = "{xlabel}, {ylabel} to {Rlabel}".format(**self.__dict__)
 
-        #create a copy of an HDF5 table model for this CT
-        self.H5table = CT3D_TableModel(self.I, self.J, self.K, extracols, xdscrt, ydscrt, Rdscrt)
-
         return
 
     def __call__(self, x, y, R, **kwargs):
@@ -999,10 +996,15 @@ class ContingencyTable3D(object):
 
         return s
 
-    def FillTableRow(self, row):
+    def FillTableRow(self, row, extracols={}):
         """Fills an HDF5 table row with this contingency table's data and results."""
 
-        for key in self.H5table.columns:
+        if self.H5table == None:
+            #create a copy of an HDF5 table model for this CT
+            self.H5table = CT3D_TableModel(self.I, self.J, self.K, extracols, 
+                self.xdiscrete, self.ydiscrete, self.Rdiscrete)
+
+        for key in self.H5table:
             row[key] = getattr(self, key)
         row.append()
         return
@@ -1606,110 +1608,111 @@ def CT3D_TableModel(I, J, K, extracols={}, xdscrt=False, ydscrt=False, Rdscrt=Fa
         * `Rdscrt` (bool): Flag for R being a discrete (or continuous) variable.
     """
 
-    class CT3D_TM(tb.IsDescription):
-        xlabel  = tb.StringCol(50, pos=0)
-        ylabel  = tb.StringCol(50, pos=1)
-        Rlabel  = tb.StringCol(50, pos=2)
+    CT3D_TM = {
+        'xlabel':  tb.StringCol(50, pos=0),
+        'ylabel':  tb.StringCol(50, pos=1),
+        'Rlabel':  tb.StringCol(50, pos=2),
 
-        H_x     = tb.Float64Col(pos=3)
-        H_y     = tb.Float64Col(pos=4)
-        H_R     = tb.Float64Col(pos=5)
+        'H_x':     tb.Float64Col(pos=3),
+        'H_y':     tb.Float64Col(pos=4),
+        'H_R':     tb.Float64Col(pos=5),
 
-        H_Rx    = tb.Float64Col(pos=6)
-        H_Ry    = tb.Float64Col(pos=7)
-        H_xy    = tb.Float64Col(pos=8)
+        'H_Rx':    tb.Float64Col(pos=6),
+        'H_Ry':    tb.Float64Col(pos=7),
+        'H_xy':    tb.Float64Col(pos=8),
 
-        H_Rxy   = tb.Float64Col(pos=9)
+        'H_Rxy':   tb.Float64Col(pos=9),
 
-        H_R_x   = tb.Float64Col(pos=10)
-        H_x_R   = tb.Float64Col(pos=11)
-        I_Rx    = tb.Float64Col(pos=12)
+        'H_R_x':   tb.Float64Col(pos=10),
+        'H_x_R':   tb.Float64Col(pos=11),
+        'I_Rx':    tb.Float64Col(pos=12),
 
-        H_R_y   = tb.Float64Col(pos=13)
-        H_y_R   = tb.Float64Col(pos=14)
-        I_Ry    = tb.Float64Col(pos=15)
+        'H_R_y':   tb.Float64Col(pos=13),
+        'H_y_R':   tb.Float64Col(pos=14),
+        'I_Ry':    tb.Float64Col(pos=15),
 
-        H_x_y   = tb.Float64Col(pos=16)
-        H_y_x   = tb.Float64Col(pos=17)
-        I_xy    = tb.Float64Col(pos=18)
+        'H_x_y':   tb.Float64Col(pos=16),
+        'H_y_x':   tb.Float64Col(pos=17),
+        'I_xy':    tb.Float64Col(pos=18),
 
-        H_R_xy   = tb.Float64Col(pos=19)
-        H_x_Ry   = tb.Float64Col(pos=20)
-        H_y_Rx   = tb.Float64Col(pos=21)
+        'H_R_xy':   tb.Float64Col(pos=19),
+        'H_x_Ry':   tb.Float64Col(pos=20),
+        'H_y_Rx':   tb.Float64Col(pos=21),
 
-        H_Rx_y   = tb.Float64Col(pos=22)
-        H_Ry_x   = tb.Float64Col(pos=23)
-        H_xy_R   = tb.Float64Col(pos=24)
+        'H_Rx_y':   tb.Float64Col(pos=22),
+        'H_Ry_x':   tb.Float64Col(pos=23),
+        'H_xy_R':   tb.Float64Col(pos=24),
 
-        I_Rxy    = tb.Float64Col(pos=25)
-        I_Rx_y   = tb.Float64Col(pos=26)
-        I_Ry_x   = tb.Float64Col(pos=27)
-        I_xy_R   = tb.Float64Col(pos=28)
+        'I_Rxy':    tb.Float64Col(pos=25),
+        'I_Rx_y':   tb.Float64Col(pos=26),
+        'I_Ry_x':   tb.Float64Col(pos=27),
+        'I_xy_R':   tb.Float64Col(pos=28),
 
-        U_R_x   = tb.Float64Col(pos=29)
-        U_x_R   = tb.Float64Col(pos=30)
+        'U_R_x':   tb.Float64Col(pos=29),
+        'U_x_R':   tb.Float64Col(pos=30),
 
-        U_R_y   = tb.Float64Col(pos=31)
-        U_y_R   = tb.Float64Col(pos=32)
+        'U_R_y':   tb.Float64Col(pos=31),
+        'U_y_R':   tb.Float64Col(pos=32),
 
-        U_x_y   = tb.Float64Col(pos=33)
-        U_y_x   = tb.Float64Col(pos=34)
+        'U_x_y':   tb.Float64Col(pos=33),
+        'U_y_x':   tb.Float64Col(pos=34),
 
-        U_Rx_y  = tb.Float64Col(pos=35)
-        U_Ry_x  = tb.Float64Col(pos=36)
-        U_xy_R  = tb.Float64Col(pos=37)
+        'U_Rx_y':  tb.Float64Col(pos=35),
+        'U_Ry_x':  tb.Float64Col(pos=36),
+        'U_xy_R':  tb.Float64Col(pos=37),
 
-        U_R_xy  = tb.Float64Col(pos=38)
-        U_y_Rx  = tb.Float64Col(pos=39)
-        U_x_Ry  = tb.Float64Col(pos=40)
+        'U_R_xy':  tb.Float64Col(pos=38),
+        'U_y_Rx':  tb.Float64Col(pos=39),
+        'U_x_Ry':  tb.Float64Col(pos=40),
 
-        U_Rx    = tb.Float64Col(pos=41)
-        U_Ry    = tb.Float64Col(pos=42)
-        U_xy    = tb.Float64Col(pos=43)
-        U_Rxy   = tb.Float64Col(pos=44)
+        'U_Rx':    tb.Float64Col(pos=41),
+        'U_Ry':    tb.Float64Col(pos=42),
+        'U_xy':    tb.Float64Col(pos=43),
+        'U_Rxy':   tb.Float64Col(pos=44),
 
-        M1      = tb.Float64Col(pos=45)
-        M2      = tb.Float64Col(pos=46)
-        M3      = tb.Float64Col(pos=47)
-        M4      = tb.Float64Col(pos=48)
-        M5      = tb.Float64Col(pos=49)
-        S       = tb.Float64Col(pos=50)
+        'M1':      tb.Float64Col(pos=45),
+        'M2':      tb.Float64Col(pos=46),
+        'M3':      tb.Float64Col(pos=47),
+        'M4':      tb.Float64Col(pos=48),
+        'M5':      tb.Float64Col(pos=49),
+        'S':       tb.Float64Col(pos=50),
 
-        chi2    = tb.Float64Col(pos=51)
-        G       = tb.Float64Col(pos=52)
-        C       = tb.Float64Col(pos=53)
-        V       = tb.Float64Col(pos=54)
-        R_stat  = tb.Float64Col(pos=55)
+        'chi2':    tb.Float64Col(pos=51),
+        'G':       tb.Float64Col(pos=52),
+        'C':       tb.Float64Col(pos=53),
+        'V':       tb.Float64Col(pos=54),
+        'R_stat':  tb.Float64Col(pos=55),
 
-        N       = tb.Int32Col(pos=56)
+        'N':       tb.Int32Col(pos=56),
 
-        N_idotdot = tb.Int32Col(pos=57, shape = I)
-        N_dotjdot = tb.Int32Col(pos=58, shape = J)
-        N_dotdotk = tb.Int32Col(pos=59, shape = K)
+        'N_idotdot': tb.Int32Col(pos=57, shape=I),
+        'N_dotjdot': tb.Int32Col(pos=58, shape=J),
+        'N_dotdotk': tb.Int32Col(pos=59, shape=K),
 
-        N_ijdot   = tb.Int32Col(pos=60, shape = (I, J))
-        N_idotk   = tb.Int32Col(pos=61, shape = (I, K))
-        N_dotjk   = tb.Int32Col(pos=62, shape = (J, K))
+        'N_ijdot':   tb.Int32Col(pos=60, shape=(I, J)),
+        'N_idotk':   tb.Int32Col(pos=61, shape=(I, K)),
+        'N_dotjk':   tb.Int32Col(pos=62, shape=(J, K)),
 
-        N_ijk   = tb.Int32Col(pos=63, shape = (I, J, K))
-        E_ijk   = tb.Float64Col(pos=64, shape = (I, J, K))
+        'N_ijk':   tb.Int32Col(pos=63, shape=(I, J, K)),
+        'E_ijk':   tb.Float64Col(pos=64, shape=(I, J, K)),
+        }
 
-        if Rdscrt:
-            Rbounds = tb.Float64Col(pos=65, shape = I)
-        else:
-            Rbounds = tb.Float64Col(pos=65, shape = I+1)
+    if Rdscrt:
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=65, shape=I)
+    else:
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=65, shape=I+1)
 
-        if xdscrt:
-            xbounds = tb.Float64Col(pos=66, shape = J)
-        else:
-            xbounds = tb.Float64Col(pos=66, shape = J+1)
+    if xdscrt:
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=66, shape=J)
+    else:
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=66, shape=J+1)
 
-        if ydscrt:
-            ybounds = tb.Float64Col(pos=67, shape = K)
-        else:
-            ybounds = tb.Float64Col(pos=67, shape = K+1)
+    if ydscrt:
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=67, shape=K)
+    else:
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=67, shape=K+1)
 
-    CT3D_TM.columns.update(extracols)
+    CT3D_TM.update(extracols)
 
     return CT3D_TM
 

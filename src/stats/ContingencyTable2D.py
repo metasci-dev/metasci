@@ -866,7 +866,6 @@ def CT2D_TableModel(I, J, extracols={}, xdscrt=False, Rdscrt=False):
     else:
         CT2D_TM["xbounds"] = tb.Float64Col(pos=27, shape = J+1)
 
-#    CT2D_TM.columns.update(extracols)
     CT2D_TM.update(extracols)
 
     return CT2D_TM
