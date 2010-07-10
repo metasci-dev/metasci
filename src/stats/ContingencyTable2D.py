@@ -214,9 +214,6 @@ class ContingencyTable2D(object):
         if self.title == None:
             self.title = "{xlabel} to {Rlabel}".format(**self.__dict__)
 
-        #create a copy of an HDF5 table model for this CT
-        self.H5table = CT2D_TableModel(self.I, self.J, extracols, xdscrt, Rdscrt)
-
         return 
 
     def __call__(self, x, R, **kwargs):
@@ -502,10 +499,14 @@ class ContingencyTable2D(object):
 
         return s
 
-    def FillTableRow(self, row):
+    def FillTableRow(self, row, extracols={}):
         """Fills an HDF5 table row with this contingency table's data and results."""
 
-        for key in self.H5table.columns:
+        if self.H5table == None:
+            #create a copy of an HDF5 table model for this CT
+            self.H5table = CT2D_TableModel(self.I, self.J, extracols, self.xdiscrete, self.Rdiscrete)
+
+        for key in self.H5table:
             row[key] = getattr(self, key)
         row.append()
         return
@@ -783,6 +784,9 @@ class ContingencyTable2D(object):
     """HDF5 table model for this contingency table and its results."""
 
 
+
+
+
 #2D Contingency Table Data Model
 def CT2D_TableModel(I, J, extracols={}, xdscrt=False, Rdscrt=False): 
     """Two-Dimensional Contingency Table Model for HDF5
@@ -815,53 +819,54 @@ def CT2D_TableModel(I, J, extracols={}, xdscrt=False, Rdscrt=False):
         * `xdscrt` (bool): Flag for x being a discrete (or continuous) variable.
         * `Rdscrt` (bool): Flag for x being a discrete (or continuous) variable.
     """
+    CT2D_TM = {
+        'xlabel': tb.StringCol(50, pos=0),
+        'Rlabel': tb.StringCol(50, pos=1),
 
-    class CT2D_TM(tb.IsDescription):
-        xlabel  = tb.StringCol(50, pos=0)
-        Rlabel  = tb.StringCol(50, pos=1)
+        'H_R':    tb.Float64Col(pos=2),
+        'H_x':    tb.Float64Col(pos=3),
 
-        H_R     = tb.Float64Col(pos=2)
-        H_x     = tb.Float64Col(pos=3)
+        'H_Rx':   tb.Float64Col(pos=4),
+        'H_R_x':  tb.Float64Col(pos=5),
+        'H_x_R':  tb.Float64Col(pos=6),
 
-        H_Rx    = tb.Float64Col(pos=4)
-        H_R_x   = tb.Float64Col(pos=5)
-        H_x_R   = tb.Float64Col(pos=6)
+        'I_Rx':   tb.Float64Col(pos=7),
 
-        I_Rx    = tb.Float64Col(pos=7)
+        'U_Rx':   tb.Float64Col(pos=8),
+        'U_R_x':  tb.Float64Col(pos=9),
+        'U_x_R':  tb.Float64Col(pos=10),
 
-        U_Rx    = tb.Float64Col(pos=8)
-        U_R_x   = tb.Float64Col(pos=9)
-        U_x_R   = tb.Float64Col(pos=10)
+        'M1':     tb.Float64Col(pos=11),
+        'M2':     tb.Float64Col(pos=12),
+        'M3':     tb.Float64Col(pos=13),
+        'M4':     tb.Float64Col(pos=14),
+        'M5':     tb.Float64Col(pos=15),
+        'S':      tb.Float64Col(pos=16),
 
-        M1      = tb.Float64Col(pos=11)
-        M2      = tb.Float64Col(pos=12)
-        M3      = tb.Float64Col(pos=13)
-        M4      = tb.Float64Col(pos=14)
-        M5      = tb.Float64Col(pos=15)
-        S       = tb.Float64Col(pos=16)
+        'chi2':   tb.Float64Col(pos=17),
+        'C':      tb.Float64Col(pos=18),
+        'V':      tb.Float64Col(pos=19),
+        'R_stat': tb.Float64Col(pos=20),
 
-        chi2    = tb.Float64Col(pos=17)
-        C       = tb.Float64Col(pos=18)
-        V       = tb.Float64Col(pos=19)
-        R_stat  = tb.Float64Col(pos=20)
+        'N':      tb.Int32Col(pos=21),
 
-        N       = tb.Int32Col(pos=21)
+        'N_dotj': tb.Int32Col(pos=22, shape = J),
+        'N_idot': tb.Int32Col(pos=23, shape = I),
+        'N_ij':   tb.Int32Col(pos=24, shape = (I, J)),
+        'E_ij':   tb.Float64Col(pos=25, shape = (I, J)),
+        }
 
-        N_dotj  = tb.Int32Col(pos=22, shape = J)
-        N_idot  = tb.Int32Col(pos=23, shape = I)
-        N_ij    = tb.Int32Col(pos=24, shape = (I, J))
-        E_ij    = tb.Float64Col(pos=25, shape = (I, J))
+    if Rdscrt:
+        CT2D_TM["Rbounds"] = tb.Float64Col(pos=26, shape = I)
+    else:
+        CT2D_TM["Rbounds"] = tb.Float64Col(pos=26, shape = I+1)
 
-        if Rdscrt:
-            Rbounds = tb.Float64Col(pos=26, shape = I)
-        else:
-            Rbounds = tb.Float64Col(pos=26, shape = I+1)
+    if xdscrt:
+        CT2D_TM["xbounds"] = tb.Float64Col(pos=27, shape = J)
+    else:
+        CT2D_TM["xbounds"] = tb.Float64Col(pos=27, shape = J+1)
 
-        if xdscrt:
-            xbounds = tb.Float64Col(pos=27, shape = J)
-        else:
-            xbounds = tb.Float64Col(pos=27, shape = J+1)
-
-    CT2D_TM.columns.update(extracols)
+#    CT2D_TM.columns.update(extracols)
+    CT2D_TM.update(extracols)
 
     return CT2D_TM
