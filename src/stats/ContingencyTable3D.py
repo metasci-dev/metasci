@@ -333,6 +333,29 @@ class ContingencyTable3D(object):
         self.M5 = 1.0 - (self.I_Rxy / self.H_Rxy)
         self.S  = (self.U_x_R + self.U_y_R) / (2.0 * self.U_xy_R)
 
+        #Try Jun's method
+        U_x_R_y = []
+        for k in range(self.K):
+            H_x_k = -1.0 * (self.p_dotjk[k] * np.log(self.p_dotjk[k])).sum()
+            I_Rx_k = 0.0
+            for i in range(self.I):
+                for j in range(self.J):
+                    I_Rx_k = I_Rx_k + (self.p_ijk[i][j][k] * np.log(self.p_ijk[i][j][k] / (self.p_idotk[i][k] * self.p_dotjk[j][k])))
+            U_x_R_k  = I_Rx_k / H_x_k
+            U_x_R_y.append(U_x_R_k)
+        self.sigma_U_x_R = np.std(U_x_R_y)
+
+        U_y_R_x = []
+        for j in range(self.J):
+            H_y_j = -1.0 * (self.p_dotjk[j] * np.log(self.p_dotjk[j])).sum()
+            I_Ry_j = 0.0
+            for i in range(self.I):
+                for k in range(self.K):
+                    I_Ry_j = I_Ry_j + (self.p_ijk[i][j][k] * np.log(self.p_ijk[i][j][k] / (self.p_ijdot[i][j] * self.p_dotjk[j][k])))
+            U_y_R_j  = I_Ry_j / H_y_j
+            U_y_R_x.append(U_y_R_j)
+        self.sigma_U_y_R = np.std(U_y_R_x)
+
         #Finally, copy over some options to the CT itself
         self.sbuf   = int(sbuf) 		#String buffer for contingency table printing
         self.salign = "^" + str(self.sbuf)	#String buffer for contingency table printing
@@ -554,7 +577,10 @@ class ContingencyTable3D(object):
         s = s + "M3       = " + str(self.M3)     + "\n"
         s = s + "M4       = " + str(self.M4)     + "\n"
         s = s + "M5       = " + str(self.M5)     + "\n"
-        s = s + "S        = " + str(self.S)     + "\n"
+        s = s + "S        = " + str(self.S)      + "\n"
+
+        s = s + "sigma_U_x_R = " + str(self.sigma_U_x_R) + "\n"
+        s = s + "sigma_U_y_R = " + str(self.sigma_U_y_R) + "\n"
 
         return s
 
@@ -988,6 +1014,9 @@ class ContingencyTable3D(object):
             s = s + "M5: $1 - \\frac{{I(R,x,y)}}{{H(R,x,y))}}$&${M5:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "S: $\\frac{{U(x|R) + U(y|R)}}{{2 U(x,y|R))}}$&${S:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + self.hline
+            s = s + "$\sigma(U(x|R|y))$:&${sigma_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + "$\sigma(U(y|R|x))$:&${sigma_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "\\end{tabular}\n"
             s = s + "\\end{center}\n"
@@ -1553,6 +1582,11 @@ class ContingencyTable3D(object):
 
        S = \\frac{U(x|R) + U(y|R)}{2 U(x,y|R)}
     """
+    sigma_U_x_R = None
+    """Dr. Jun Li's method:  Take the standard deviation of U(x|R) of each kth slice of the table."""
+
+    sigma_U_y_R = None
+    """Dr. Jun Li's method:  Take the standard deviation of U(y|R) of each jth slice of the table."""
 
     #Finally, copy over some options to the CT itself
     sbuf = None
@@ -1677,40 +1711,43 @@ def CT3D_TableModel(I, J, K, extracols={}, xdscrt=False, ydscrt=False, Rdscrt=Fa
         'M5':      tb.Float64Col(pos=49),
         'S':       tb.Float64Col(pos=50),
 
-        'chi2':    tb.Float64Col(pos=51),
-        'G':       tb.Float64Col(pos=52),
-        'C':       tb.Float64Col(pos=53),
-        'V':       tb.Float64Col(pos=54),
-        'R_stat':  tb.Float64Col(pos=55),
+        'sigma_U_x_R': tb.Float64Col(pos=51),
+        'sigma_U_y_R': tb.Float64Col(pos=52),
 
-        'N':       tb.Int32Col(pos=56),
+        'chi2':    tb.Float64Col(pos=53),
+        'G':       tb.Float64Col(pos=54),
+        'C':       tb.Float64Col(pos=55),
+        'V':       tb.Float64Col(pos=56),
+        'R_stat':  tb.Float64Col(pos=57),
 
-        'N_idotdot': tb.Int32Col(pos=57, shape=I),
-        'N_dotjdot': tb.Int32Col(pos=58, shape=J),
-        'N_dotdotk': tb.Int32Col(pos=59, shape=K),
+        'N':       tb.Int32Col(pos=58),
 
-        'N_ijdot':   tb.Int32Col(pos=60, shape=(I, J)),
-        'N_idotk':   tb.Int32Col(pos=61, shape=(I, K)),
-        'N_dotjk':   tb.Int32Col(pos=62, shape=(J, K)),
+        'N_idotdot': tb.Int32Col(pos=59, shape=I),
+        'N_dotjdot': tb.Int32Col(pos=60, shape=J),
+        'N_dotdotk': tb.Int32Col(pos=61, shape=K),
 
-        'N_ijk':   tb.Int32Col(pos=63, shape=(I, J, K)),
-        'E_ijk':   tb.Float64Col(pos=64, shape=(I, J, K)),
+        'N_ijdot':   tb.Int32Col(pos=62, shape=(I, J)),
+        'N_idotk':   tb.Int32Col(pos=63, shape=(I, K)),
+        'N_dotjk':   tb.Int32Col(pos=64, shape=(J, K)),
+
+        'N_ijk':   tb.Int32Col(pos=65, shape=(I, J, K)),
+        'E_ijk':   tb.Float64Col(pos=66, shape=(I, J, K)),
         }
 
     if Rdscrt:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=65, shape=I)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=67, shape=I)
     else:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=65, shape=I+1)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=67, shape=I+1)
 
     if xdscrt:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=66, shape=J)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=68, shape=J)
     else:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=66, shape=J+1)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=68, shape=J+1)
 
     if ydscrt:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=67, shape=K)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=69, shape=K)
     else:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=67, shape=K+1)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=69, shape=K+1)
 
     CT3D_TM.update(extracols)
 
