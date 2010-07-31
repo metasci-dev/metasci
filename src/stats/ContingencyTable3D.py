@@ -1016,6 +1016,7 @@ class ContingencyTable3D(object):
             s = s + "S: $\\frac{{U(x|R) + U(y|R)}}{{2 U(x,y|R))}}$&${S:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "$\sigma(U(x|R|y))$:&${sigma_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + self.hline
             s = s + "$\sigma(U(y|R|x))$:&${sigma_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "\\end{tabular}\n"
