@@ -12,7 +12,7 @@ http://nukestar.me.utexas.edu/scopatz/metasci/
 
 Due to its fuzzy definition, the term 'metascience' is often used to discuss 
 spiritual and existential matters. Please see 
-`this awesome Toothpaste for Dinner commic <http://www.toothpastefordinner.com/index.php?date=020610>`_
+`this awesome Toothpaste for Dinner comic <http://www.toothpastefordinner.com/index.php?date=020610>`_
 This connotation is used as a pun here. (MetaSci, where the magic happens!)
 
 MetaSci currently has the following dependencies:
