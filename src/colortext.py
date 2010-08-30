@@ -1,7 +1,7 @@
 """Provides easy functions for colorizing string text that goes to the command line.
 
-This was strongly inspired by `http://www.devx.com/opensource/Article/41398/1763/page/6`_ and 
-`http://tldp.org/HOWTO/Bash-Prompt-HOWTO/x329.html`_
+This was strongly inspired by `a couple <http://www.devx.com/opensource/Article/41398/1763/page/6>`_ 
+`of great tutorials <http://tldp.org/HOWTO/Bash-Prompt-HOWTO/x329.html>`_.
 """
 
 from string import Formatter

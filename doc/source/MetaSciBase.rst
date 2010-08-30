@@ -20,3 +20,11 @@ These functions and modules may be accessed via::
 .. automodule:: metasci
    :members:
    :inherited-members:
+
+====================================================
+:mod:`metasci.colortext` -- MetaSci String Colorizer
+====================================================
+
+.. automodule:: metasci.colortext
+   :members:
+   :inherited-members:
