@@ -29,6 +29,10 @@ color_fg = {
     'white':         '1;37',
 
     'message':       '1;32',
+    'time':          '1;33',
+    'date':          '1;33',
+    'min':           '1;33',
+    'sec':           '1;33',
     'directory':     '1;36',
     'localdir':      '1;36',
     'remotedir':     '1;35',
