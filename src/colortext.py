@@ -39,6 +39,11 @@ color_fg = {
     'warning':       '1;31',
     'error':         '1;31',
     'fail':          '1;31',
+
+    'iso':           '1;33',
+    'nuc':           '1;33',
+    'isotope':       '1;33',
+    'nuclide':       '1;33',
     }
 """Foreground color dictionary"""
 
