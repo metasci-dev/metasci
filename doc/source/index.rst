@@ -20,11 +20,12 @@ MetaSci currently has the following dependencies:
 
 
 The source code for MetaSci may be found at the
-`Launchpad project site <http://launchpad.net/metasci>`_.
-Or you may simply branch from the trunk using bazaar::
+`GitHub project site <http://github.com/metasci-dev/metasci>`_.
+Or you may simply clone from the trunk using git::
 
-    bzr branch lp:metasci
+    git clone git://github.com/metasci-dev/metasci.git
 
+Additionally, a `Windows build is provided here <http://github.com/metasci-dev/metasci/raw/master/dist/MetaSci-0.23.win32-py2.6.msi>`_ (Right-click, 'Save Link As').
 
 --------
 Contents
