@@ -1038,18 +1038,18 @@ class ContingencyTable3D(object):
             s = s + self.hline
             s = s + "$\sigma(U(x|R|y))$:&${sigma_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
-            s = s + "$\mbox{Std. Error}(U(x|R|y))$:&${se_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + "$\mbox{{Std. Error}}(U(x|R|y))$:&${se_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
-            s = s + "$\mbox{Coef. of Var.}(U(x|R|y))$:&${cv_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + "$\mbox{{Coef. of Var.}}(U(x|R|y))$:&${cv_U_x_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
 
             s = s + "$\mu(U(y|R|x))$:&${mu_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "$\sigma(U(y|R|x))$:&${sigma_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
-            s = s + "$\mbox{Std. Error}(U(y|R|x))$:&${se_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + "$\mbox{{Std. Error}}(U(y|R|x))$:&${se_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
-            s = s + "$\mbox{Coef. of Var.}(U(y|R|x))$:&${cv_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + "$\mbox{{Coef. of Var.}}(U(y|R|x))$:&${cv_U_y_R:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
 
             s = s + "\\end{tabular}\n"
