@@ -1,4 +1,5 @@
 from . import isoname
+import numpy as np
 
 ###################################
 ### ORIGEN Input Deck Functions ###
@@ -30,46 +31,121 @@ def write_tape4(isovec, name="TAPE4.INP"):
     tape4.close()
     return
 
+tape5_irradiation_template = ("  -1\n"
+                              "  -1\n"
+                              "  -1\n"
+                              "  CUT     5 {CUT_OFF} -1\n"
+                              "  RDA     FIND CROSS SECTION LIBRARY IDENTIFIER NUMBERS IN YOUR LIBRARY FILE\n"
+                              "  LIB     0 1 2 3 {NLB1} {NLB2} {NLB3} 9 3 0 3 0\n"
+                              "  OPTL    {optl}\n"
+                              "  OPTA    {opta}\n"
+                              "  OPTF    {optf}\n"
+                              "  INP     1 -1  0  -1  4  4\n"
+                              "  HED     1     IN FUEL\n"
+                              "  RDA     ALL IRRADIATION (IRF and IRP) CARDS MUST TAKE PLACE IN BETWEEN BURNUP (BUP) CARDS\n"
+                              "  BUP\n"
+                              "  {ir_type}     {ir_time}  {ir_value}   1   2   4  2\n"
+                              "  BUP\n"
+                              "  OUT     2  1 1 0\n"
+                              "  END\n")
 
-def make_input_tape5(self, t, p = ""):
-    """Writes a TAPE5 files to the current directory + p.
-    Only use this function from within the libs/ORIGEN/ directory."""
+nes_table = np.zeros((2, 2, 2), dtype=int)
+nes_table[True, True, True]    = 1
+nes_table[True, True, False]   = 2
+nes_table[True, False, True]   = 3
+nes_table[False, True, True]   = 4
+nes_table[True, False, False]  = 5
+nes_table[False, True, False]  = 6
+nes_table[False, False, True]  = 7
+nes_table[False, False, False] = 8
 
-    # Grab important data from library file.
-    libfile = tb.openFile('../{0}.h5'.format(reactor), 'r')
-    lfr = libfile.root
-    n_t = FineTime.index(t)
-    IRFtime = FineTime[n_t] - FineTime[n_t-1]
-    IRFflux = lfr.Fine.flux[n_t]
-    libfile.close()
+def out_table_string(out_table_nes, out_table_num):
+    """Makes a string output table line from relevant information."""
+    if out_table_num: 
+        return np.ones(24, dtype=int)
 
-    # Grab the library numbers used in the original TAPE9 file...
-    NLB = []
-    tape9_orig = open("../../{0}.tape9".format(reactor), 'r')
-    for line in tape9_orig:
-        ls = line.split()
-        if ls == []:
-            continue
-        elif (3 < int(ls[0])) and not (ls[0] in NLB):
-            NLB.append(ls[0])
-    tape9_orig.close()
+    arr = 8 * np.ones(24, dtype=int)
+    idx = np.array(out_table_num, dtype=int) - 1
 
-    # Make template file fill-value dictionary
+    arr[idx] = nes_table[out_table_nes]
+
+    s = np.array2string(arr)[1:-1]
+
+    return s
+
+def make_input_tape5_irradiation(self, ir_type, ir_time, ir_value, nlb, 
+                                 cut_off=10.0**-10, name="TAPE5.INP"
+                                 out_table_nes=(False, False, True),
+                                 out_table_laf=(True,  True,  True),
+                                 out_table_num=None):
+    """Writes a TAPE5 files to `name`.
+
+    Parameters
+    ----------
+
+    ir_type (str): Flag that determines whether this is a constant power "IRP"
+        irradiation or a constant flux "IRF" irradiation calculation.
+
+    ir_time (float): Irradiation time durration.
+
+    ir_value (float): Magnitude of the irradiation. If ir_type = "IRP", then
+        this is a power.  If ir_type = "IRF", then this is a flux. 
+
+    nlb: Three tuple of library numbers from the tape9 file, eg (204, 205, 206).
+
+    cut_off (float): Cut-off concentration, below which reults are not recorded.
+
+    out_table_nes (three-tuple of bools): Specifies which type of output
+        tables should be printed by ORIGEN.  The fields represent 
+        (Nuclide, Element, Summary).  Thus, the default value of (False, False, True) 
+        only prints the summary tables. 
+
+    out_table_laf (three-tuple of bools): Specifies whether to print the 
+        activation products (l), actinides (a), and fission products (f).
+        By default all three are printed.
+
+    out_table_num (sequence of ints or None):  Specifies which tables, by number,
+        to print according to the rules given by out_table_nes and 
+        out_table_laf.  For example the list [10, 5] would print tables 5 
+        and 10.  There are 24 tables available.
+        If None, then all tables are printed.   
+    """
+
+    if ir_type not in ["IRP", "IRF"]:
+        raise TypeError("Irradiation type must be either 'IRP' or 'IRF'.")
+    
+    # Make template fill-value dictionary
     tape5_kw = {
-        'CUT_OFF': self.cut_off,
-        'IRFtime': '{0:.10E}'.format(IRFtime),
-        'IRFflux': '{0:.10E}'.format(IRFflux),
-        'NLB1':    NLB[0],
-        'NLB2':    NLB[1],
-        'NLB3':    NLB[2],
+        'CUT_OFF':  "{0:.3E}".format(cut_off),
+        'NLB1':     nlb[0],
+        'NLB2':     nlb[1],
+        'NLB3':     nlb[2],
+        'ir_type':  ir_type,
+        'ir_time':  '{0:.10E}'.format(ir_time),
+        'ir_value': '{0:.10E}'.format(ir_value),
         }
 
-    # Fill the template
-    with open("../../../templates/{0}.tape5.origen.template".format(reactor), 'r') as f:
-        template_file = f.read()
+    # Activation Product Print String
+    if out_table_laf[0]:
+        tape5_kw['optl'] = out_table_string(out_table_nes, out_table_num)
+    else:
+        tape5_kw['optl'] = np.array2string(8 * np.ones(24, dtype=int))[1:-1]
 
-    with open("{0}{1}_T{2}.tape5".format(p, reactor, t), 'w') as f:
-        f.write(template_file.format(**tape5_kw))
+    # Actinide Print String
+    if out_table_laf[1]:
+        tape5_kw['opta'] = out_table_string(out_table_nes, out_table_num)
+    else:
+        tape5_kw['opta'] = np.array2string(8 * np.ones(24, dtype=int))[1:-1]
+
+    # Fission Product Print String
+    if out_table_laf[2]:
+        tape5_kw['optf'] = out_table_string(out_table_nes, out_table_num)
+    else:
+        tape5_kw['optf'] = np.array2string(8 * np.ones(24, dtype=int))[1:-1]
+
+    # Fill the template and write it to a file
+    with open(name, 'w') as f:
+        f.write(tape5_irradiation_template.format(**tape5_kw))
 
     return
 
