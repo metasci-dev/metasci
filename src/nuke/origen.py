@@ -61,13 +61,15 @@ nes_table[False, False, False] = 8
 
 def out_table_string(out_table_nes, out_table_num):
     """Makes a string output table line from relevant information."""
-    if out_table_num: 
-        return np.ones(24, dtype=int)
+    if out_table_num == None: 
+        arr = np.ones(24, dtype=int)
+        s = np.array2string(arr)[1:-1]
+        return s
 
     arr = 8 * np.ones(24, dtype=int)
     idx = np.array(out_table_num, dtype=int) - 1
 
-    arr[idx] = nes_table[out_table_nes]
+    arr[idx] = nes_table[tuple(out_table_nes)]
 
     s = np.array2string(arr)[1:-1]
 

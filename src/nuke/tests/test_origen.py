@@ -20,3 +20,30 @@ def test_write_tape4():
 
     observed_file.close()
     os.remove("test.tape4")
+
+
+def test_out_table_string1():
+    obs = msno.out_table_string(None, None)
+    exp = "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    assert_equal(obs, exp)
+
+def test_out_table_string2():
+    obs = msno.out_table_string((False, False, True), None)
+    exp = "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    assert_equal(obs, exp)
+
+def test_out_table_string3():
+    obs = msno.out_table_string((False, False, True), range(1, 25))
+    exp = "7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7"
+    assert_equal(obs, exp)
+
+def test_out_table_string4():
+    obs = msno.out_table_string((False, False, True), [10, 5])
+    exp = "8 8 8 8 7 8 8 8 8 7 8 8 8 8 8 8 8 8 8 8 8 8 8 8"
+    assert_equal(obs, exp)
+
+def test_out_table_string5():
+    obs = msno.out_table_string((True, False, True), [10, 5])
+    exp = "8 8 8 8 3 8 8 8 8 3 8 8 8 8 8 8 8 8 8 8 8 8 8 8"
+    assert_equal(obs, exp)
+
