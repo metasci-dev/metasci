@@ -309,11 +309,21 @@ def parse_tape6(name = "TAPE6.OUT"):
             elif ("TABLE:" in line):
                 in_table = True
 
-                table_key = "table_{0}".format(ls[1])
+                # Set table key
+                if line[0] == "0":
+                    table_key = "table_{0}".format(ls[1])
+                else:
+                    table_key = "table_{0}".format(ls[0])
+
                 if table_key not in results.keys():
                     results[table_key] = {}
 
-                table_type = ls[2].lower()
+                # Set table type
+                if line[0] == "0":
+                    table_type = ls[2].lower()
+                else:
+                    table_type = ls[1].lower()
+
                 if table_type not in results[table_key].keys():
                     results[table_key][table_type] = {}
 
