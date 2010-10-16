@@ -249,57 +249,102 @@ def run_origen(self):
     os.chdir('../../') #Back to 'reactor' root
     return 
 
-def parse_tape6(name = ""):
-    """Parses an ORIGEN TAPE6.OUT file that is in the current directory + path p."""
-    InTable5 = False
+def parse_tape6(name = "TAPE6.OUT"):
+    """Parses an ORIGEN TAPE6.OUT file that is in the current directory + path p.
 
-    # (Re-)Initialize data structures
-    if hasattr(self, "tape6_BU"):
-        del self.tape6_BU, self.tape6_k, self.tape6_Pro, self.tape6_Des, self.tape6_outvec
-    self.tape6_BU     = -1.0
-    self.tape6_k      = -1.0
-    self.tape6_Pro    = -1.0
-    self.tape6_Des    = -1.0
-    self.tape6_outvec = {}
+    Keyword Args:
+        * name (str): Path to the tape6 file to parse:
 
-    tape6 = open("%sTAPE6.OUT"%p, 'r')
-    for line in tape6:
-        if "BURNUP,MWD" in line:
+    Returns:
+        * results (dict): Dictionary of parsed values.
+    """
+    results = {}
+
+    # Defaults
+    in_table = False
+    table_key = None
+    table_type = None
+
+    # Read the TAPE6 file
+    with open(name, 'r') as tape6:
+        for line in tape6:
+            # Skip trivial lines
+            if len(line) == 0:
+                continue
+
+            # Spliut the line
             ls = line.split()
-            self.tape6_BU = float(ls[-1])
-            continue
-        elif "K INFINITY" in line:
-            ls = line.split()
-            self.tape6_k = float(ls[-1])
-            continue
-        elif "NEUT PRODN" in line:
-            ls = line.split()
-            self.tape6_Pro = float(ls[-1])
-            continue
-        elif "NEUT DESTN" in line:
-            ls = line.split()
-            self.tape6_Des = float(ls[-1])
-            continue
-        elif "5 SUMMARY TABLE:  CONCENTRATIONS, GRAMS" in line:
-            InTable5 = True
-            continue
-        elif InTable5 and ("OUTPUT UNIT =  6" in line):
-            InTable5 = False
-            continue
-        elif InTable5:
-            ls = line.split()
-            try:
-                iso = isoname.LLAAAM_2_zzaaam(ls[0])
-            except:
+
+            # Grab Basis lines
+            if "TIME, SEC" in line:
+                results["time_sec"] = float(ls[-1])
+
+            elif "NEUT. FLUX" in line:
+                results["flux"] = float(ls[-1])
+
+            elif "SP POW,MW" in line:
+                results["specific_power_MW"] = float(ls[-1])
+
+            elif "BURNUP,MWD" in line:
+                results["burnup_MWD"] = float(ls[-1])
+
+            elif "K INFINITY" in line:
+                results["k_inf"] = float(ls[-1])
+
+            elif "NEUT PRODN" in line:
+                results["neutron_production_rate"] = float(ls[-1])
+
+            elif "NEUT DESTN" in line:
+                results["neutron_destruction_rate"] = float(ls[-1])
+
+            elif "TOT BURNUP" in line:
+                results["total_burnup"] = float(ls[-1])
+
+            elif "AVG N FLUX" in line:
+                results["average_flux"] = float(ls[-1])
+
+            elif "AVG SP POW" in line:
+                results["average_specific_power"] = float(ls[-1])
+
+            elif ("TABLE:" in line) and (line[0] == "0"):
+                in_table = True
+
+                table_key = "table_{0}".format(ls[1])
+                if table_key not in results.keys():
+                    results[table_key] = {}
+
+                table_type = ls[2].lower()
+                if table_type not in results[table_key].keys():
+                    results[table_key][table_type] = {}
+
+                    pline = line.partition(":")[2].partition(",")
+                    title = pline[0].strip()
+                    units = pline[2].strip()
+
+                    results[table_key][table_type]["title"] = title
+                    results[table_key][table_type]["units"] = units
+                    results[table_key][table_type]["data"]  = {}
+                    
+
+            elif in_table and ("OUTPUT UNIT = " in line) and (line[0] == "1"):
+                # restore defaults
+                in_table = False
+                table_key = None
+                table_type = None
+
+            elif in_table:
                 try:
-                    iso = isoname.LLAAAM_2_zzaaam(ls[0] + ls[1])
+                    iso = isoname.LLAAAM_2_zzaaam(ls[0])
                 except:
-                    continue
-            self.tape6_outvec[iso] = float(ls[-1])
-        else:
-            continue
-    tape6.close()
-    return 
+                    try:
+                        iso = isoname.LLAAAM_2_zzaaam(ls[0] + ls[1])
+                    except:
+                        continue
+                results[table_key][table_type]["data"][iso] = float(ls[-1])
+            else:
+                continue
+
+    return results
 
 
 def write_tape9(name_new="TAPE9.INP", name_org="original.tape9", SNG={}, SN2N={}, 
