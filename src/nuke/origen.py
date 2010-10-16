@@ -306,7 +306,7 @@ def parse_tape6(name = "TAPE6.OUT"):
             elif "AVG SP POW" in line:
                 results["average_specific_power"] = float(ls[-1])
 
-            elif ("TABLE:" in line) and (line[0] == "0"):
+            elif ("TABLE:" in line):
                 in_table = True
 
                 table_key = "table_{0}".format(ls[1])
@@ -326,7 +326,7 @@ def parse_tape6(name = "TAPE6.OUT"):
                     results[table_key][table_type]["data"]  = {}
                     
 
-            elif in_table and ("OUTPUT UNIT = " in line) and (line[0] == "1"):
+            elif in_table and ("OUTPUT UNIT = " in line):
                 # restore defaults
                 in_table = False
                 table_key = None
