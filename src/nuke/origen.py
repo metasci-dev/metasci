@@ -82,35 +82,28 @@ def write_tape5_irradiation(ir_type, ir_time, ir_value, nlb,
                             out_table_num=None):
     """Writes a TAPE5 files to `name`.
 
-    Parameters
-    ----------
+    Args:
+        * ir_type (str): Flag that determines whether this is a constant power "IRP"
+          irradiation or a constant flux "IRF" irradiation calculation.
+        * ir_time (float): Irradiation time durration in days.
+        * ir_value (float): Magnitude of the irradiation. If ir_type = "IRP", then
+          this is a power.  If ir_type = "IRF", then this is a flux. 
+        * nlb: Three tuple of library numbers from the tape9 file, eg (204, 205, 206).
 
-    ir_type (str): Flag that determines whether this is a constant power "IRP"
-        irradiation or a constant flux "IRF" irradiation calculation.
-
-    ir_time (float): Irradiation time durration.
-
-    ir_value (float): Magnitude of the irradiation. If ir_type = "IRP", then
-        this is a power.  If ir_type = "IRF", then this is a flux. 
-
-    nlb: Three tuple of library numbers from the tape9 file, eg (204, 205, 206).
-
-    cut_off (float): Cut-off concentration, below which reults are not recorded.
-
-    out_table_nes (three-tuple of bools): Specifies which type of output
-        tables should be printed by ORIGEN.  The fields represent 
-        (Nuclide, Element, Summary).  Thus, the default value of (False, False, True) 
-        only prints the summary tables. 
-
-    out_table_laf (three-tuple of bools): Specifies whether to print the 
-        activation products (l), actinides (a), and fission products (f).
-        By default all three are printed.
-
-    out_table_num (sequence of ints or None):  Specifies which tables, by number,
-        to print according to the rules given by out_table_nes and 
-        out_table_laf.  For example the list [10, 5] would print tables 5 
-        and 10.  There are 24 tables available.
-        If None, then all tables are printed.   
+    Keyword Args:
+        * cut_off (float): Cut-off concentration, below which reults are not recorded.
+        * out_table_nes (three-tuple of bools): Specifies which type of output
+          tables should be printed by ORIGEN.  The fields represent 
+          (Nuclide, Element, Summary).  Thus, the default value of (False, False, True) 
+          only prints the summary tables. 
+        * out_table_laf (three-tuple of bools): Specifies whether to print the 
+          activation products (l), actinides (a), and fission products (f).
+          By default all three are printed.
+        * out_table_num (sequence of ints or None):  Specifies which tables, by number,
+          to print according to the rules given by out_table_nes and 
+          out_table_laf.  For example the list [10, 5] would print tables 5 
+          and 10.  There are 24 tables available.
+          If None, then all tables are printed.   
     """
 
     if ir_type not in ["IRP", "IRF"]:
@@ -256,7 +249,7 @@ def run_origen(self):
     os.chdir('../../') #Back to 'reactor' root
     return 
 
-def parse_tape6(self, p = ""):
+def parse_tape6(name = ""):
     """Parses an ORIGEN TAPE6.OUT file that is in the current directory + path p."""
     InTable5 = False
 

@@ -1,7 +1,7 @@
 ======================================
-:mod:`nuke.Origen` -- ORIGEN Functions
+:mod:`nuke.origen` -- ORIGEN Functions
 ======================================
 
-.. automodule:: metasci.nuke.Origen
+.. automodule:: metasci.nuke.origen
    :members:
 
