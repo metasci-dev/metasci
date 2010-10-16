@@ -74,7 +74,7 @@ def out_table_string(out_table_nes, out_table_num):
     return s
 
 def make_input_tape5_irradiation(self, ir_type, ir_time, ir_value, nlb, 
-                                 cut_off=10.0**-10, name="TAPE5.INP"
+                                 cut_off=10.0**-10, name="TAPE5.INP",
                                  out_table_nes=(False, False, True),
                                  out_table_laf=(True,  True,  True),
                                  out_table_num=None):
