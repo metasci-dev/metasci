@@ -76,3 +76,28 @@ def test_write_tape5_irradiation():
 
     observed_file.close()
     os.remove("test.tape5")
+
+
+def test_parse_tape6_1():
+    r = msno.parse_tape6('test.tape6')
+    assert(0 < len(r))
+
+    assert_equal(r['time_sec'], 8.64E+06)
+    assert_equal(r['flux'], 1.71E+17)
+    assert_equal(r['specific_power_MW'], 5.50E-01)
+    assert_equal(r['burnup_MWD'], 5.50E+01)
+    assert_equal(r['k_inf'], 0.08498)
+    assert_equal(r['neutron_production_rate'], 2.97E-04)
+    assert_equal(r['neutron_destruction_rate'], 3.50E-03)
+    assert_equal(r['total_burnup'], 5.50E+01)
+    assert_equal(r['average_flux'], 1.71E+17)
+    assert_equal(r['average_specific_power'], 5.50E-01)
+
+    tab_keys = set(['table_{0}'.format(n) for n in range(1, 11) + range(13, 25)])
+    assert(tab_keys <=  set(r.keys()))
+
+    for tk in tab_keys:
+        assert('nuclide' in  r[tk].keys())
+        assert('title' in r[tk]['nuclide'].keys())
+        assert('units' in r[tk]['nuclide'].keys())
+        assert('data'  in r[tk]['nuclide'].keys())
