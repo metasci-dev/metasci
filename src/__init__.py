@@ -506,29 +506,30 @@ def Nines2Lin(dat, base=10.0):
     lined = np.log10(logged)
     return lined
 
-def LogLabelConvert(xy, base = 10.0):
+def LogLabelConvert(xy, plot, base = 10.0):
     """Converts log labels to appropriate nines values.
     xy is a string that contains either or both 'x' and 'y' for each axis that needs to be converted.
 
     Args:
         * `xy` (str): A string that contains either 'x', 'y', or both for each axis that needs to be converted.
+        * `plot` (plot): A matplotlib plot object, ie the 'plt' in 'import matplotlib.pyplot as plt'.
 
     Keyword Args:
         * `base` (float): Base of logarithm.
     """
 
     if 'x' in xy:
-        xlocs, xlabels = xticks()
+        xlocs, xlabels = plot.xticks()
         xlabels = []
         for n in xlocs:
             xlabels.append(1.0 - base/n)
-        xticks(xlocs, xlabels)
+        plot.xticks(xlocs, xlabels)
     if 'y' in xy:
-        ylocs, ylabels = yticks()
+        ylocs, ylabels = plot.yticks()
         ylabels = []
         for n in ylocs:
             ylabels.append( 1.0 - base/n )
-        yticks(ylocs, ylabels)
+        plot.yticks(ylocs, ylabels)
     if not ('x' in xy) and not ('y' in xy):
         print "No axes converted because neither \'x\' nor \'y\' appeared in the xy variable."
 
