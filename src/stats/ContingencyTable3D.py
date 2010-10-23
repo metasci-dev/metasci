@@ -374,7 +374,7 @@ class ContingencyTable3D(object):
         for j in range(self.J):
             for k in range(self.K):
                 H_R = -1.0 * (self.p_ijk[:,j,k] * np.log(self.p_ijk[:,j,k])).sum()
-                eta = H_R / np.log(self.I)
+                eta_R = H_R / np.log(self.I)
                 self.eta_R_x_y[i][j] = eta_R
 
         self.mu_eta_R_x_y = self.eta_R_x_y.mean()
