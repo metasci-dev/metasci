@@ -366,6 +366,21 @@ class ContingencyTable3D(object):
         self.se_U_y_R = self.sigma_U_y_R / np.sqrt(self.J)
         self.cv_U_y_R = self.sigma_U_y_R / self.mu_U_y_R
 
+        # Make Jun's Method Symmetric
+        self.cv_U_x_y_R = 0.5 * (self.cv_U_x_R + self.cv_U_y_R)
+
+        # Try Entropy metric as sensitivity of sensitivity
+        self.eta_R_x_y = np.zeros((self.J, self.K))
+        for j in range(self.J):
+            for k in range(self.K):
+                H_R = -1.0 * (self.p_ijk[:,j,k] * np.log(self.p_ijk[:,j,k])).sum()
+                eta = H_R / np.log(self.I)
+                self.eta_R_x_y[i][j] = eta_R
+
+        self.mu_eta_R_x_y = self.eta_R_x_y.mean()
+        self.sigma_eta_R_x_y = self.eta_R_x_y.std()
+        self.se_eta_R_x_y = self.sigma_eta_R_x_y / np.sqrt(self.J * self.K)
+        self.cv_eta_R_x_y = self.sigma_eta_R_x_y / self.mu_eta_R_x_y
 
         #Finally, copy over some options to the CT itself
         self.sbuf   = int(sbuf) 		#String buffer for contingency table printing
@@ -945,6 +960,8 @@ class ContingencyTable3D(object):
             s = s + "H(R,y$|$x)&${H_Ry_x:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "H(x,y$|$R)&${H_xy_R:{sform}}${endrow}".format(**self.__dict__) 
+            s = s + self.hline
+            s = s + "H(R$|$x$|$x)&${H_R_x_y:{sform}}${endrow}".format(**self.__dict__) 
             s = s + self.hline
             s = s + "\\end{tabular}\n"
             s = s + "\\end{center}\n"
@@ -1632,7 +1649,21 @@ class ContingencyTable3D(object):
     se_U_y_R = None
     """Dr. Jun Li's method:  Take the stamdard error of U(y|R) of each jth slice of the table."""
     cv_U_y_R = None
-    """Dr. Jun Li's method:  Take the coeficient of variation of U(y|R) of each jth slice of the table."""
+    """Dr. Jun Li's method:  Take the coefficient of variation of U(y|R) of each jth slice of the table."""
+
+    cv_U_x_y_R = None
+    """Dr. Jun Li's method:  Average of cv_U_x_R and cv_U_y_R."""
+
+    eta_R_x_y = None
+    """The entopy of R for given (x, y), normalized by ln(I)."""
+    mu_eta_R_x_y = None
+    """The mean of all values in eta(R|x|y)"""
+    sigma_eta_R_x_y = None
+    """The standard deviation of all values in eta(R|x|y)"""
+    se_eta_R_x_y = None
+    """The standard error of all values in eta(R|x|y)"""
+    cv_eta_R_x_y = None
+    """The coefficent of variation of all values in eta(R|x|y)"""
 
     #Finally, copy over some options to the CT itself
     sbuf = None
@@ -1767,40 +1798,48 @@ def CT3D_TableModel(I, J, K, extracols={}, xdscrt=False, ydscrt=False, Rdscrt=Fa
         'se_U_y_R':    tb.Float64Col(pos=57),
         'cv_U_y_R':    tb.Float64Col(pos=58),
 
-        'chi2':    tb.Float64Col(pos=59),
-        'G':       tb.Float64Col(pos=60),
-        'C':       tb.Float64Col(pos=61),
-        'V':       tb.Float64Col(pos=62),
-        'R_stat':  tb.Float64Col(pos=63),
+        'cv_U_x_y_R': tb.Float64Col(pos=59),
 
-        'N':       tb.Int32Col(pos=64),
+        'eta_R_x_y':       tb.Float64Col(pos=60, shape=(J, K)),
+        'mu_eta_R_x_y':    tb.Float64Col(pos=61),
+        'sigma_eta_R_x_y': tb.Float64Col(pos=62),
+        'se_eta_R_x_y':    tb.Float64Col(pos=63),
+        'cv_eta_R_x_y':    tb.Float64Col(pos=64),
 
-        'N_idotdot': tb.Int32Col(pos=65, shape=I),
-        'N_dotjdot': tb.Int32Col(pos=66, shape=J),
-        'N_dotdotk': tb.Int32Col(pos=67, shape=K),
+        'chi2':    tb.Float64Col(pos=65),
+        'G':       tb.Float64Col(pos=66),
+        'C':       tb.Float64Col(pos=67),
+        'V':       tb.Float64Col(pos=68),
+        'R_stat':  tb.Float64Col(pos=69),
 
-        'N_ijdot':   tb.Int32Col(pos=68, shape=(I, J)),
-        'N_idotk':   tb.Int32Col(pos=69, shape=(I, K)),
-        'N_dotjk':   tb.Int32Col(pos=70, shape=(J, K)),
+        'N':       tb.Int32Col(pos=70),
 
-        'N_ijk':   tb.Int32Col(pos=71, shape=(I, J, K)),
-        'E_ijk':   tb.Float64Col(pos=72, shape=(I, J, K)),
+        'N_idotdot': tb.Int32Col(pos=71, shape=I),
+        'N_dotjdot': tb.Int32Col(pos=72, shape=J),
+        'N_dotdotk': tb.Int32Col(pos=73, shape=K),
+
+        'N_ijdot':   tb.Int32Col(pos=74, shape=(I, J)),
+        'N_idotk':   tb.Int32Col(pos=75, shape=(I, K)),
+        'N_dotjk':   tb.Int32Col(pos=76, shape=(J, K)),
+
+        'N_ijk':   tb.Int32Col(pos=77, shape=(I, J, K)),
+        'E_ijk':   tb.Float64Col(pos=78, shape=(I, J, K)),
         }
 
     if Rdscrt:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=73, shape=I)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=79, shape=I)
     else:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=73, shape=I+1)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=79, shape=I+1)
 
     if xdscrt:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=74, shape=J)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=80, shape=J)
     else:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=74, shape=J+1)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=80, shape=J+1)
 
     if ydscrt:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=75, shape=K)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=81, shape=K)
     else:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=75, shape=K+1)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=81, shape=K+1)
 
     CT3D_TM.update(extracols)
 
