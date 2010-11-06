@@ -37,6 +37,7 @@ numdelim = numbers + delims
 alphanumericdelim = alphanumeric + delims
 """The alphabet, digits, and delimiters: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:;[]{}()<>?!~$%^*[space][tab][newline]"""
 
+words = alphabet + numbers + "_"
 
 #########################
 ### General Functions ###
@@ -280,6 +281,29 @@ def grabFromList(lyst, inORout):
             templyst.append( data.data( lyst[(4*n)+1], lyst[(4*n)+2]) )
 
     return templyst
+
+def natural_naming(name):
+    """Computes the natural name from a string."""
+
+    nat_name =     name.replace(" ",  "_")
+    nat_name = nat_name.replace("\t", "_")
+    nat_name = nat_name.replace("\n", "_")
+
+    n = 0
+    while n < len(nat_name):
+        if words.count(nat_name[n]) == 0:
+            nat_part = nat_name.partition(nat_name[n])
+            nat_name = nat_part[0] + nat_part[2]
+        else:
+            n += 1
+
+    if len(nat_name) == 0:
+        return nat_name
+
+    if 0 < numbers.count(nat_name[0]):
+        nat_name = "_" + nat_name
+
+    return nat_name
 
 ##########################
 ### Physics Phunctions ###
