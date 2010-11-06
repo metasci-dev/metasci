@@ -1,7 +1,7 @@
 """MetaSci Basics"""
 
 #__all__ = ["data", "graph"]
-
+import csv
 import os
 
 import numpy as np
@@ -586,6 +586,20 @@ def SafeRemove(p, IsDir = False):
         pass
         
     return
+
+def max_csv(csv_file, col=0):
+    reader = csv.reader(open(csv_file, 'rb'))
+    l = []
+    for row in reader:
+        l.append(row[col])
+    return max(l)
+
+def max_len_csv(csv_file, col=0):
+    reader = csv.reader(open(csv_file, 'rb'))
+    l = []
+    for row in reader:
+        l.append( (len(row[col]), row[col]) )
+    return max(l)
 
 #Automatically imported modules
 import data
