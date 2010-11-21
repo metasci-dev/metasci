@@ -482,3 +482,32 @@ def isovec_keys_2_MCNP(isovec):
         newvec[mixed_2_MCNP(iso)] = isovec[iso]
     
     return newvec
+
+########################
+### Helper Functions ### 
+########################
+
+def nuc_weight_zzaaam(nuc):
+    """Calculates the weight of a nuclide in zzaaam form in [amu].  
+    This function is implicitly called by nuc_weight().
+
+    Args:
+        * `nuc` (int): Input nuclide in zzaaam form.
+
+    Returns:
+        * `weight` (float): Atomic weight of this nuclide.  
+    """
+    return ((nuc//10)%1000)
+
+def nuc_weight(nuc):
+    """Calculates the weight of a nuclide in [amu].
+
+    Args:
+        * `nuc` (int or str): Input nuclide of any valid form.
+
+    Returns:
+        * `weight` (float): Atomic weight of this nuclide.  
+    """
+    nuc_zz = mixed_2_zzaaam(nuc)
+    return nuc_weight_zzaaam(nuc_zz)
+
