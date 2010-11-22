@@ -1,15 +1,16 @@
 """MetaSci Nuclear Basics"""
 
-#Prefer importing the system version of isoname
-#over the package one.  This is because the system
-#version is probably Python bidings of C++ code, 
-#and thus faster.
+# Prefer importing the system version of isoname
+# over the package one.  This is because the system
+# version is probably Python bidings of C++ code, 
+# and thus faster.
 try:
     import isoname
 except:
     import IsoName as isoname
 
-def CellPower(Material, SpecificPower, CellVolume, Density):
+
+def cell_power(Material, SpecificPower, CellVolume, Density):
     """Calculates the power from a given unit cell.
 
     Args:
@@ -30,7 +31,7 @@ def CellPower(Material, SpecificPower, CellVolume, Density):
     return SpecificPower * (10.0**-3) * Density * WeightFracIHM * CellVolume
 
 
-def GroupCollapse(const_g, flux_g, flux = 0.0):
+def group_collapse(const_g, flux_g, flux = 0.0):
     """Performs a very simple group collapse.
 
     Args:
@@ -50,6 +51,55 @@ def GroupCollapse(const_g, flux_g, flux = 0.0):
     for g in range(len(const_g)):
         total = total + (flux_g[g] * const_g[g] / flux  )
     return total
+
+
+def convolve_initial_fuel_form(stream, chem_form):
+    """Convolves a heavy metal mass stream with a chemical form.  The chemical 
+    form is a dictionary that should have an "IHM" key, whose value gets replaced
+    with the fuel mass stream in the resultant isovec.
+
+    Args:
+        * `stream` (MassStream [see BriPy]): An initial heavy metal mass stream.
+        * `chem_form` (dict): The chemical form of the fuel.  For instance UOX 
+          would be represented by ``{80160: 2.0, "IHM": 1.0}`` while a metal fuel
+          would simply be ``{"IHM": 1.0}``.
+
+    Returns:
+        * `isovec` (dict): Normalized, mass-weighted isotopic vector of the initial fuel form.
+        * `AW` (float): Atomic weight of the fuel mass stream (ie, just the IHM).
+        * `MW` (float): Molecular weight of the chemical form after the fuel stream has been 
+          inserted into it.  This should always be greater than or equal to AW.
+    """
+
+    AW = stream.atomic_weight()
+
+    # Calculate the MW
+    if "IHM" not in chem_form:
+        raise KeyError("The fuel chemical form must contain the key 'IHM'.")
+
+    MW = 0.0
+    for key in chem_form:
+        if key == "IHM":
+            MW += chem_form[key] * AW
+        else:
+            key_aw = isoname.nuc_weight(key)
+            MW += chem_form[key] * key_aw
+
+    AW_over_MW = AW / MW
+
+    # Calculate the isotopic vector
+    isovec = {}
+    for key in chem_form:
+        if key == "IHM":
+            comp = stream.comp
+            for iso in comp:
+                isovec[iso] = comp[iso] * AW_over_MW
+        else:
+            key_zz = isoname.mixed_2_zzaaam(key)
+            key_aw = isoname.nuc_weight_zzaaam(key_zz)
+            isovec[key_zz] = chem_form[key] * key_aw / MW
+
+    return isovec, AW, MW
 
 
 ######################
