@@ -1,5 +1,5 @@
 """Functions to make a nuclear data hdf5 file from the raw libraries."""
-
+import os
 import math
 
 import tables as tb
@@ -23,7 +23,7 @@ def convert_to_barns(xs, unit):
 		print("Units {0} could not be converted".format(unit))
 		return
 
-def get_xs_from_file(nucname, XS_Type_Flag, XS_Energy_Flag):
+def get_xs_from_html_file(nucname, XS_Type_Flag, XS_Energy_Flag):
 	with open("XShtml/{0}.html".format(nucname), 'r') as f:
 		inType = False
 		for line in f:
@@ -64,7 +64,7 @@ decay_iso_desc = {
     'branch_ratio': tb.Float64Col(pos=6)	
     }
 
-def make_decay(h5_file="decay.h5", decay_file='decay.txt'):
+def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
     """Makes a decay table and adds it to the hdf5 library.
 
     Keyword Args:
@@ -139,7 +139,7 @@ atomic_weight_desc = {
     'abund':  tb.FloatCol(pos=4)
     }
 
-def make_atomic_weight(h5_file="decay.h5", data_file='atomic_weight.txt'):
+def make_atomic_weight(h5_file="nuc_data.h5", data_file='atomic_weight.txt'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
     Keyword Args:
@@ -174,67 +174,98 @@ def make_atomic_weight(h5_file="decay.h5", data_file='atomic_weight.txt'):
     # Close the hdf5 file
     kdb.close()
 
-#######################
-### Now for XS Data ###
-#######################
-XSGroup = kdb.createGroup("/", "XS", "Neutron Cross Section Data")
 
-XS_Type_Flags = {"sigma_t": "Total Cross Section",
-	"sigma_e":      "Elastic Scattering Cross Section",
-	"sigma_i":      "Total Inelastic Cross Section",
-	"sigma_2n":     "(n,2n) Cross Section",
-	"sigma_3n":     "(n,3n) Cross Section",
-	"sigma_4n":     "(n,4n) Cross Section",
-	"sigma_f":      "Total Fission Cross Section",
-	"sigma_gamma":  "Radiative Capture Cross Section",
-	"sigma_alpha":  "(n,alpha) Cross Section",
-	"sigma_proton": "(n,p) Cross Section",
-	"sigma_deut":   "(n,d) Cross Section",
-	"sigma_trit":   "(n,t) Cross Section"}
+#################################
+### Now for One Group XS Data ###
+#################################
 
-XS_Energy_Flags = {"Thermal": "at 0.0253 eV", 
-	"ThermalMaxwellAve":  "Maxwell avg. at 0.0253 eV",
-	"ResonanceIntegral":  "Resonance integral",
-	"FourteenMeV":        "at 14 MeV",
-	"FissionSpectrumAve": "Fission spectrum avg."}
+xs_1g_type_flags = {
+    "sigma_t":      "Total Cross Section",
+    "sigma_e":      "Elastic Scattering Cross Section",
+    "sigma_i":      "Total Inelastic Cross Section",
+    "sigma_2n":     "(n,2n) Cross Section",
+    "sigma_3n":     "(n,3n) Cross Section",
+    "sigma_4n":     "(n,4n) Cross Section",
+    "sigma_f":      "Total Fission Cross Section",
+    "sigma_gamma":  "Radiative Capture Cross Section",
+    "sigma_alpha":  "(n,alpha) Cross Section",
+    "sigma_proton": "(n,p) Cross Section",
+    "sigma_deut":   "(n,d) Cross Section",
+    "sigma_trit":   "(n,t) Cross Section"
+    }
 
-class XSDescription(tables.IsDescription):
-	isoLL        = tables.StringCol(itemsize=6, pos=1)
-	isozz        = tables.IntCol(pos=2)
-	sigma_t      = tables.FloatCol(pos=3)
-	sigma_s      = tables.FloatCol(pos=4)
-	sigma_e      = tables.FloatCol(pos=5)
-	sigma_i      = tables.FloatCol(pos=6)
-	sigma_a      = tables.FloatCol(pos=7)
-	sigma_gamma  = tables.FloatCol(pos=8)
-	sigma_f      = tables.FloatCol(pos=9)
-	sigma_alpha  = tables.FloatCol(pos=10)
-	sigma_proton = tables.FloatCol(pos=11)
-	sigma_deut   = tables.FloatCol(pos=12)
-	sigma_trit   = tables.FloatCol(pos=13)
-	sigma_2n     = tables.FloatCol(pos=14)
-	sigma_3n     = tables.FloatCol(pos=15)
-	sigma_4n     = tables.FloatCol(pos=16)
+xs_1g_energy_flags = {
+    "Thermal":            "at 0.0253 eV", 
+    "ThermalMaxwellAve":  "Maxwell avg. at 0.0253 eV",
+    "ResonanceIntegral":  "Resonance integral",
+    "FourteenMeV":        "at 14 MeV",
+    "FissionSpectrumAve": "Fission spectrum avg."
+    }
 
-for xsef in XS_Energy_Flags.keys():
-	XStable = kdb.createTable(XSGroup, xsef, XSDescription, "({0}) [barns]".format(XS_Energy_Flags[xsef]))
+xs_1g_desc = {
+    'iso_LL':       tb.StringCol(itemsize=6, pos=1)
+    'iso_zz':       tb.IntCol(pos=2)
+    'sigma_t':      tb.FloatCol(pos=3)
+    'sigma_s':      tb.FloatCol(pos=4)
+    'sigma_e':      tb.FloatCol(pos=5)
+    'sigma_i':      tb.FloatCol(pos=6)
+    'sigma_a':      tb.FloatCol(pos=7)
+    'sigma_gamma':  tb.FloatCol(pos=8)
+    'sigma_f':      tb.FloatCol(pos=9)
+    'sigma_alpha':  tb.FloatCol(pos=10)
+    'sigma_proton': tb.FloatCol(pos=11)
+    'sigma_deut':   tb.FloatCol(pos=12)
+    'sigma_trit':   tb.FloatCol(pos=13)
+    'sigma_2n':     tb.FloatCol(pos=14)
+    'sigma_3n':     tb.FloatCol(pos=15)
+    'sigma_4n':     tb.FloatCol(pos=16)
+    }
 
-	nucrow = XStable.row
-	for  nuc in stablelist:
-		nucrow['isoLL'] = nuc
-		nucrow['isozz'] = isoname.LLAAAM_2_zzaaam(nuc)
+def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
+    """Makes an atomic weight table and adds it to the hdf5 library.
 
-		for xstf in XS_Type_Flags.keys():
-			nucrow[xstf] = GetXSfromFile(nuc, XS_Type_Flags[xstf], XS_Energy_Flags[xsef])
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_dir (str): path to that holds nuclide html one group neutron 
+          cross section files.
+    """
+    # Get nulcide list from directory
+    nuclist = [nuc.partition('.html')[0] for nuc in os.listdir(data_dir)]
 
-		nucrow['sigma_s'] = nucrow['sigma_e'] + nucrow['sigma_i']
-		nucrow['sigma_a'] = nucrow['sigma_gamma'] + nucrow['sigma_f'] + nucrow['sigma_alpha'] + nucrow['sigma_proton'] + \
-			nucrow['sigma_deut'] + nucrow['sigma_trit'] + nucrow['sigma_2n'] + nucrow['sigma_3n'] + nucrow['sigma_4n']
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
 
-		nucrow.append()
+    # Create Group
+    xs_1g_group = kdb.createGroup("/", "xs_1g", "One Group Neutron Cross Section Data")
 
-	XStable.flush()
+    # Loop through all energy types
+    for xsef in xs_1g_energy_flags:
+        # Create table for this energy 
+        xs_1g_table = kdb.createTable(xs_1g_group, xsef, xs_1g_desc, "({0}) [barns]".format(xs_1g_energy_flags[xsef]))
+        nucrow = xs_1g_table.row
 
-#Clean-up
-kdb.close()
+        for nuc in nuclist:
+            iso_LL = isoname.mixed_2_LLAAAM(nuc)
+            iso_zz = isoname.LLAAAM_2_zzaaam(iso_LL)
+
+            nucrow['iso_LL'] = iso_LL
+            nucrow['iso_zz'] = iso_zz
+
+            for xstf in xs_1g_type_flags:
+                nucrow[xstf] = get_xs_from_html_file(nuc, xs_1g_type_flags[xstf], xs_1g_energy_flags[xsef])
+
+            nucrow['sigma_s'] = nucrow['sigma_e'] + nucrow['sigma_i']
+
+            nucrow['sigma_a'] = nucrow['sigma_gamma'] + nucrow['sigma_f'] + nucrow['sigma_alpha'] + \
+                                nucrow['sigma_proton'] + nucrow['sigma_deut'] + nucrow['sigma_trit'] + \
+                                nucrow['sigma_2n'] + nucrow['sigma_3n'] + nucrow['sigma_4n']
+
+            # Write out this row 
+            nucrow.append()
+
+        # Writr out this table
+        xs_1g_table.flush()
+
+    # Close the hdf5 file
+    kdb.close()
 
