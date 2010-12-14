@@ -1,28 +1,31 @@
-"""Atomic Weight Library Interface"""
+"""This module provides a way to grab the raw data from various web sources, since providing a mirror of the original 
+data is not acceptable in some cases.  However, the output of these functions is a new expression of the underlying
+data and is therefore not subject to the original copyright.  These new datasets are provided here."""
 
-#Standard packages
-
-#My packages
 import isoname
-from ..data import data
-from . import __path__
+import urllib2
 
-#Note that since ground state and meta-stable isotopes are of the same atomic weight, 
-#the meta-stables have been discluded from the following data sets.
 
-def MakeLib():
+# Note that since ground state and meta-stable isotopes are of the same atomic weight, 
+# the meta-stables have been discluded from the following data sets.
+
+def grab_atomic_weights(file_out='atomic_weight.txt'):
     """Makes the atomic weight library.
     Library rows have the the following form:
 
     iso	AW	AW_sig	Abund
+
+    where:
         iso	= Isotope in LLZZZM format
         AW	= Atomic Weight [amu]
         AW_sig	= Atomic Weight Uncertainty [amu]
         Abund	= Natural fractional atomic abundance [unitless]
-    Not to be used under normal circumstances.
-    More like an embedded script, in case the librrary file is lost and unrecoverable."""
 
-    import urllib2
+    Not to be used under normal circumstances.
+    More like an embedded script, in case the librrary file is lost and unrecoverable.
+
+    FIXME: This could use a rewrite such that it doesn't have to grab them all at once.
+    """
 
     isolist = []
     
@@ -86,26 +89,10 @@ def MakeLib():
 
     isotab = sorted(isotab)
 
-    libfile = open('AtomicWeight.LIB', 'w')
+    libfile = open(file_out, 'w')
     for row in isotab:
-        libfile.write( '%s\t%s\t%s\t%s\n'%(isoname.aazzzm_2_LLZZZM(row[0]), row[1], row[2], row[3] )  )
+        new_row = '{0:<6}  {1:<11}  {2:<9}  {3}\n'.format(isoname.aazzzm_2_LLZZZM(row[0]), row[1], row[2], row[3])
+        libfile.write(new_row)
     libfile.close()
 
     return
-
-AtomicWeight = {}	#Atomic Weights of Isotopes
-ElementWeight = {} 	#Weight of Naturally Occuring Elements
-for key in isoname.LLaadic.keys():
-    ElementWeight[key] = data(0.0, 0.0)
-
-lib = open(__path__[0] + '/AtomicWeight.LIB', 'r')
-for line in lib:
-    ls = line.split()
-    iso = isoname.LLZZZM_2_aazzzm(ls[0])
-    AtomicWeight[ iso ] = data(ls[1], ls[2])
-
-    frac_abund = float(ls[3]) 
-    if 0.0 < frac_abund:
-        element = isoname.aaLLdic[ iso[:2] ]
-        ElementWeight[element] = ElementWeight[element] + (frac_abund * AtomicWeight[ iso ])
-lib.close()
