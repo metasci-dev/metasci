@@ -11,39 +11,41 @@ import isoname
 ########################
 
 def convert_to_barns(xs, unit):
-	unit = unit.lower()
+    unit = unit.lower()
 	
-	if unit == "b":
-		return xs
-	elif unit == "mb":
-		return xs * (10.0**-3)
-	elif unit == "microbarn":
-		return xs * (10.0**-6)
-	else:
-		print("Units {0} could not be converted".format(unit))
-		return
+    if unit == "b":
+        return xs
+    elif unit == "mb":
+        return xs * (10.0**-3)
+    elif unit == "microbarn":
+        return xs * (10.0**-6)
+    else:
+        print("Units {0} could not be converted".format(unit))
+        return
 
 def get_xs_from_html_file(nucname, XS_Type_Flag, XS_Energy_Flag):
-	with open("XShtml/{0}.html".format(nucname), 'r') as f:
-		inType = False
-		for line in f:
-			if XS_Type_Flag in line:
-				inType = True
+    with open("XShtml/{0}.html".format(nucname), 'r') as f:
+        inType = False
+        for line in f:
+            if XS_Type_Flag in line:
+                inType = True
 
-			if inType and ("<li>"+XS_Energy_Flag in line):
-				du = line.partition("=")[2].split()
-				data = float(du.pop(0))
-				unit = ""
-				for u in du:
-					unit = unit + u
-				unit = unit.partition("\\")[0]
-				data = Convert2Barns(data, unit)
-				return data
-			elif inType and ("</ul>" in line):
-				#XS not defined for this energy, returning zero
-				return 0.0
-	#If the specific XS was not found in trhis file, return zero
-	return 0.0
+            if inType and ("<li>"+XS_Energy_Flag in line):
+                du = line.partition("=")[2].split()
+                data = float(du.pop(0))
+                unit = ""
+                for u in du:
+                    unit = unit + u
+                unit = unit.partition("\\")[0]
+                data = Convert2Barns(data, unit)
+                return data
+
+            elif inType and ("</ul>" in line):
+                # XS not defined for this energy, returning zero
+                return 0.0
+
+    # If the specific XS was not found in trhis file, return zero
+    return 0.0
 
 
 ##################
@@ -88,8 +90,8 @@ def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
         for line in lib:
 	        ls = line.split()
 
-	        from_iso_LL = isoname.mixed_2_LLAAAM(ls[0])
-	        from_iso_zz = isoname.LLAAAM_2_zzaaam(from_iso_LL)            
+            from_iso_LL = isoname.mixed_2_LLAAAM(ls[0])
+            from_iso_zz = isoname.LLAAAM_2_zzaaam(from_iso_LL)            
        	    row['from_iso_LL'] = from_iso_LL
        	    row['from_iso_zz'] = from_iso_zz
 
