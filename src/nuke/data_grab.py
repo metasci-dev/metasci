@@ -131,3 +131,163 @@ def grab_kaeri_neutron_xs(nuclist, dir_out='xs_html/'):
 
 	    with open(dir_out + nuc + '.html', 'w') as f:
 		    f.write(kaeri.read())
+
+
+# The following is what I used to grab the decay library, 
+# but good lord does it need a rewrite! I am too ashamed to 
+# expose it in the module, yet I feel that it needs to be 
+# under version control.
+"""\
+import os
+import fpformat
+import isoname
+
+def delimit(mystr, mylc):
+	tempout = []
+
+	newlist = mystr.split(mylc[0])
+	for newel in newlist:
+		if len(mylc) == 1:
+			return newlist
+		else:
+			tempout.extend( delimit(newel, mylc[1:]) )
+	for el in tempout:
+		if el == "":
+			tempout.remove("")
+	return tempout
+	
+def time2sec(time, unit):
+	unit = unit.lower()
+	if time == "inf":
+		return time + "\t"
+	elif unit in ["fs", "femtosec", "femtosecond", "femtoseconds"]:
+		return fpformat.sci(float(time)*(10.0**(-15)), 6)
+	elif unit in ["ps", "picosec", "picosecond", "picoseconds"]:
+		return fpformat.sci(float(time)*(10.0**(-12)), 6)
+	elif unit in ["ns", "nanosec", "nanosecond", "nanoseconds"]:
+		return fpformat.sci(float(time)*(10.0**(-9)), 6)
+	elif unit in ["us", "microsec", "microsecond", "microseconds"]:
+		return fpformat.sci(float(time)*(10.0**(-6)), 6)
+	elif unit in ["ms", "millisec", "millisecond", "milliseconds"]:
+		return fpformat.sci(float(time)*(10.0**(-3)), 6)
+	elif unit in ["s", "sec", "second", "seconds"]:
+		return fpformat.sci(float(time), 6)
+	elif unit in ["m", "min", "minute", "minutes"]:
+		return fpformat.sci(float(time)*60.0, 6)
+	elif unit in ["h", "hour", "hours"]:
+		return fpformat.sci(float(time)*3600.0, 6)
+	elif unit in ["d", "day", "days"]:
+		return fpformat.sci(float(time)*3600.0*24.0, 6)
+	elif unit in ["y", "year", "years"]:
+		return fpformat.sci(float(time)*3600.0*24.0*365.0, 6)
+	elif unit ==  "mev":
+		return fpformat.sci(float(time) * (10.0**(-15)) * float(7.6e-08)/6.03, 6)
+	else:
+		print "Time given is not a number!"
+		print "Time =", time, "Unit = ", unit
+		input()
+		return "nan"
+
+def write2lib(fromiso, time, unit, toiso, branchratio):
+	decay = open("Decay.LIB", 'a')
+	timeNsec = time2sec(time, unit)
+	decay.write(fromiso + "\t" + timeNsec + "\t" + toiso + "\t" + fpformat.sci(float(branchratio) * 0.01, 6) + "\n")
+	decay.close()
+	return
+
+try:
+	os.remove("Decay.LIB")
+except:
+	pass
+
+listfile = open("isolist.txt", 'r')
+
+modeofdecaycount = 0
+tempbranchratio = "100"
+
+for isoline in listfile:
+#for isoline in ["H1", "MN52", "AM242"]:
+#for isoline in ["U234"]:
+	iso2parse = isoline.split()[0]
+	print "Now grabing data for " + iso2parse
+
+	put, get = os.popen2("wget -O iso2parse.txt http://atom.kaeri.re.kr/cgi-bin/nuclide?nuc=" + iso2parse)
+	for gline in get:
+		print gline
+
+	i2p = open("iso2parse.txt", 'r')
+	spincount = 0
+	metacount = 0
+	temptime = tempunit = temptoiso = ""
+	tempbranchratio = "100"
+	for i2pline in i2p:
+		if i2pline.count("Spin") == 1:
+			spincount = spincount + 1
+			modeofdecaycount = 0
+			temptime = tempunit = ""
+			temptoiso = ""
+			tempbranchratio = "100"
+		if i2pline.count("Meta state") == 1:
+			metacount = metacount + 1
+
+		if metacount == 0:
+			if i2pline.count("Stable Isotope") == 1:
+				write2lib(iso2parse, "inf", "s", "None", "100") 
+			elif i2pline.count("Half life") == 1:
+				i2pls = i2pline.split()
+				temptime = i2pls[-2].strip("<(~=?)>").split("(")[0]
+				tempunit = i2pls[-1].strip("<(~=?)>")
+				print 
+			elif i2pline.count("Mode of decay") == 1:
+				modeofdecaycount = modeofdecaycount + 1
+				tempmodedont = False
+				if 0 < i2pline.count("+") or 0 < i2pline.count("-XN")  or (tempbranchratio == "100" and 1 < modeofdecaycount):
+					tempmodedont = True
+				tempmode = ""
+				tempmode = delimit(i2pline, ["<", ">", "/a", "ul", " ", "\n"])[-1]
+				if tempmode in ["Alpha", "ECF", "Ne", "Mg"] or tempmodedont:
+					temptoiso = iso2parse
+				else:
+					temptoiso = isoname.aazzzm_2_LLZZZM( isoname.LLZZZM_2_aazzzm(tempmode))
+			elif i2pline.count("Branch ratio") == 1:
+				tempbranchratio = i2pline.split()[-2].strip("<(~=?)>")
+			elif i2pline.count("Decay energy") == 1:
+				if tempunit == "Unknown" or tempmode in ["Alpha", "Ne", "Mg"] or tempunit[-2:].upper() == "EV" or tempbranchratio[-2:] == "E-" or tempmodedont:
+					pass
+				else:
+					write2lib(iso2parse, temptime, tempunit, temptoiso, tempbranchratio) 
+				temptoiso = ""
+#				tempbranchratio = "100"
+
+		elif metacount == 1:
+			if i2pline.count("Half life") == 1:
+				i2pls = i2pline.split()
+				temptime = i2pls[-2].strip("<(~=?)>").split("(")[0]
+				tempunit = i2pls[-1].strip("<(~=?)>")
+			elif i2pline.count("Mode of decay") == 1:
+				modeofdecaycount = modeofdecaycount + 1
+				tempmodedont = False
+				if 0 < i2pline.count("+") or  0 < i2pline.count("-XN") or (tempbranchratio == "100" and 1 < modeofdecaycount):
+					tempmodedont = True
+				tempmode = ""
+				tempmode = delimit(i2pline, ["<", ">", "/a", "ul", " ", "\n"])[-1]
+				if tempmode in ["IT", "SF", "Alpha", "ECF", "Ne", "Mg"] or tempmodedont:
+					temptoiso = iso2parse
+				else:
+					temptoiso = isoname.aazzzm_2_LLZZZM( isoname.LLZZZM_2_aazzzm(tempmode))
+			elif i2pline.count("Branch ratio") == 1:
+				tempbranchratio = i2pline.split()[-2].strip("<(~=?)>")
+			elif i2pline.count("Decay energy") == 1:
+				if tempunit == "Unknown" or tempmode in ["Alpha", "Ne", "Mg"] or tempunit[-2:].upper() == "EV" or tempbranchratio[-2:] == "E-" or tempmodedont:
+					pass
+				else:
+					write2lib(iso2parse + "M", temptime, tempunit, temptoiso, tempbranchratio) 
+				temptoiso = ""
+#				tempbranchratio = "100"
+
+		else:
+			pass
+
+
+listfile.close()
+"""
