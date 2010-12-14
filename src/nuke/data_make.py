@@ -88,7 +88,7 @@ def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
     # Read the text file
     with open(decay_file, 'r') as lib:
         for line in lib:
-	        ls = line.split()
+            ls = line.split()
 
             from_iso_LL = isoname.mixed_2_LLAAAM(ls[0])
             from_iso_zz = isoname.LLAAAM_2_zzaaam(from_iso_LL)            
@@ -96,28 +96,28 @@ def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
        	    row['from_iso_zz'] = from_iso_zz
 
 	        # Set halflife
-	        if ls[1] == "inf":
-		        hl = 10.0**300
-    	    else:
-	           	hl = float(ls[1])
-       	    row['half_life'] = hl
+            if ls[1] == "inf":
+    	        hl = 10.0**300
+            else:
+                hl = float(ls[1])
+            row['half_life'] = hl
 
         	# Set decay constants
 	        row['decay_const'] = math.log(2.0) / hl
-	
-	        # Set to iso
-    	    if ls[2] == "None":
+
+            # Set to iso
+            if ls[2] == "None":
                 to_iso_LL = from_iso_LL
                 to_iso_zz = from_iso_zz
     	    else:
                 to_iso_LL = isoname.mixed_2_LLAAAM(ls[2])
                 to_iso_zz = isoname.LLAAAM_2_zzaaam(to_iso_LL)
 
-    	    row['to_iso_LL'] = to_iso_LL
-    	    row['to_iso_zz'] = to_iso_zz
+            row['to_iso_LL'] = to_iso_LL
+            row['to_iso_zz'] = to_iso_zz
 
-	        # Set branch ratio
-	        row['branch_ratio'] = float(ls[3])
+            # Set branch ratio
+            row['branch_ratio'] = float(ls[3])
 
             # This injects the Record values
             row.append()
