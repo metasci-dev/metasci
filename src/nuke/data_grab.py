@@ -5,11 +5,14 @@ data and is therefore not subject to the original copyright.  These new datasets
 import isoname
 import urllib2
 
+from urllib import urlopen
+from urllib import urlencode
+
 
 # Note that since ground state and meta-stable isotopes are of the same atomic weight, 
 # the meta-stables have been discluded from the following data sets.
 
-def grab_atomic_weights(file_out='atomic_weight.txt'):
+def grab_kaeri_atomic_weights(file_out='atomic_weight.txt'):
     """Makes the atomic weight library.
     Library rows have the the following form:
 
@@ -84,7 +87,7 @@ def grab_atomic_weights(file_out='atomic_weight.txt'):
         if AW == 0.0:
             continue
 
-        isotab.append([isoname.LLZZZM_2_aazzzm( key ), AW, AW_sig, '%G'%Abund])
+        isotab.append([isoname.LLZZZM_2_aazzzm(key), AW, AW_sig, '%G'%Abund])
 
 
     isotab = sorted(isotab)
@@ -96,3 +99,35 @@ def grab_atomic_weights(file_out='atomic_weight.txt'):
     libfile.close()
 
     return
+
+
+
+def grab_kaeri_neutron_xs(nuclist, dir_out='xs_html/'):
+    """Grapbs the neutron cross-section summary webpages from the KAERI website.
+
+    Args:
+        * nuclist (list): list of nuclides to grab in LLAAAM form.  It is 
+          a good idea to pipe the first column from the atomic weight library in 
+          as this value.
+
+    Keyword Args:
+        * dir_out (str): Path to output directory. 
+    """
+    param_dict = {'nuc': 'XX', 'n': 2}
+
+    for nuc in nuclist:
+	    nuc_fetched = False
+	    param_dict['nuc'] = nuc
+    	params = urlencode(param_dict)
+
+	    while not nuc_fetched:
+		    try:
+			    print("Grabbing " + nuc)
+			    kaeri = urlopen("http://atom.kaeri.re.kr/cgi-bin/nuclide?%s"%params)
+			    nuc_fetched = True
+		    except:
+			    print("Failed to grab; retrying.", end="  ")
+
+
+	    with open(dir_out + nuc + '.html', 'w') as f:
+		    f.write(kaeri.read())
