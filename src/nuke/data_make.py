@@ -103,7 +103,7 @@ def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
             row['half_life'] = hl
 
         	# Set decay constants
-	        row['decay_const'] = math.log(2.0) / hl
+            row['decay_const'] = math.log(2.0) / hl
 
             # Set to iso
             if ls[2] == "None":
