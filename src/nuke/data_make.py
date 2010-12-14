@@ -157,7 +157,7 @@ def make_atomic_weight(h5_file="nuc_data.h5", data_file='atomic_weight.txt'):
 
     with open(data_file, 'r') as f:
         for line in f:
-	        ls = line.split()
+            ls = line.split()
             iso_LL = isoname.mixed_2_LLAAAM(ls[0])
             iso_zz = isoname.LLAAAM_2_zzaaam(iso_LL)
 
