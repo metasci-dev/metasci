@@ -52,16 +52,16 @@ def get_xs_from_html_file(nucname, XS_Type_Flag, XS_Energy_Flag):
 
 # Decay isotopic description
 decay_iso_desc = {
-    'from_iso_LL': tb.StringCol(6, pos=0)
-    'from_iso_zz': tb.Int32Col(pos=1)
+    'from_iso_LL': tb.StringCol(6, pos=0),
+    'from_iso_zz': tb.Int32Col(pos=1),
 
-    'half_life':   tb.Float64Col(pos=2)
-    'decay_const': tb.Float64Col(pos=3)
+    'half_life':   tb.Float64Col(pos=2),
+    'decay_const': tb.Float64Col(pos=3),
 
-    'to_iso_LL': tb.StringCol(6, pos=4)
-    'to_iso_zz': tb.Int32Col(pos=5)
+    'to_iso_LL': tb.StringCol(6, pos=4),
+    'to_iso_zz': tb.Int32Col(pos=5),
 
-    'branch_ratio': tb.Float64Col(pos=6)	
+    'branch_ratio': tb.Float64Col(pos=6),
     }
 
 def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
@@ -132,11 +132,11 @@ def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
 ############################
 
 atomic_weight_desc = {
-    'iso_LL': tb.StringCol(itemsize=6, pos=0)
-    'iso_zz': tb.IntCol(pos=1)
-    'value':  tb.FloatCol(pos=2)
-    'error':  tb.FloatCol(pos=3)
-    'abund':  tb.FloatCol(pos=4)
+    'iso_LL': tb.StringCol(itemsize=6, pos=0),
+    'iso_zz': tb.IntCol(pos=1),
+    'value':  tb.FloatCol(pos=2),
+    'error':  tb.FloatCol(pos=3),
+    'abund':  tb.FloatCol(pos=4),
     }
 
 def make_atomic_weight(h5_file="nuc_data.h5", data_file='atomic_weight.txt'):
@@ -191,7 +191,7 @@ xs_1g_type_flags = {
     "sigma_alpha":  "(n,alpha) Cross Section",
     "sigma_proton": "(n,p) Cross Section",
     "sigma_deut":   "(n,d) Cross Section",
-    "sigma_trit":   "(n,t) Cross Section"
+    "sigma_trit":   "(n,t) Cross Section",
     }
 
 xs_1g_energy_flags = {
@@ -199,26 +199,26 @@ xs_1g_energy_flags = {
     "ThermalMaxwellAve":  "Maxwell avg. at 0.0253 eV",
     "ResonanceIntegral":  "Resonance integral",
     "FourteenMeV":        "at 14 MeV",
-    "FissionSpectrumAve": "Fission spectrum avg."
+    "FissionSpectrumAve": "Fission spectrum avg.",
     }
 
 xs_1g_desc = {
-    'iso_LL':       tb.StringCol(itemsize=6, pos=1)
-    'iso_zz':       tb.IntCol(pos=2)
-    'sigma_t':      tb.FloatCol(pos=3)
-    'sigma_s':      tb.FloatCol(pos=4)
-    'sigma_e':      tb.FloatCol(pos=5)
-    'sigma_i':      tb.FloatCol(pos=6)
-    'sigma_a':      tb.FloatCol(pos=7)
-    'sigma_gamma':  tb.FloatCol(pos=8)
-    'sigma_f':      tb.FloatCol(pos=9)
-    'sigma_alpha':  tb.FloatCol(pos=10)
-    'sigma_proton': tb.FloatCol(pos=11)
-    'sigma_deut':   tb.FloatCol(pos=12)
-    'sigma_trit':   tb.FloatCol(pos=13)
-    'sigma_2n':     tb.FloatCol(pos=14)
-    'sigma_3n':     tb.FloatCol(pos=15)
-    'sigma_4n':     tb.FloatCol(pos=16)
+    'iso_LL':       tb.StringCol(itemsize=6, pos=1),
+    'iso_zz':       tb.IntCol(pos=2),
+    'sigma_t':      tb.FloatCol(pos=3),
+    'sigma_s':      tb.FloatCol(pos=4),
+    'sigma_e':      tb.FloatCol(pos=5),
+    'sigma_i':      tb.FloatCol(pos=6),
+    'sigma_a':      tb.FloatCol(pos=7),
+    'sigma_gamma':  tb.FloatCol(pos=8),
+    'sigma_f':      tb.FloatCol(pos=9),
+    'sigma_alpha':  tb.FloatCol(pos=10),
+    'sigma_proton': tb.FloatCol(pos=11),
+    'sigma_deut':   tb.FloatCol(pos=12),
+    'sigma_trit':   tb.FloatCol(pos=13),
+    'sigma_2n':     tb.FloatCol(pos=14),
+    'sigma_3n':     tb.FloatCol(pos=15),
+    'sigma_4n':     tb.FloatCol(pos=16),
     }
 
 def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
