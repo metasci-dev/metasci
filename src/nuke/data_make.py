@@ -23,8 +23,8 @@ def convert_to_barns(xs, unit):
         print("Units {0} could not be converted".format(unit))
         return
 
-def get_xs_from_html_file(nucname, XS_Type_Flag, XS_Energy_Flag):
-    with open("XShtml/{0}.html".format(nucname), 'r') as f:
+def get_xs_from_html_file(nucname, data_dir, XS_Type_Flag, XS_Energy_Flag):
+    with open("{0}{1}.html".format(data_dir, nucname), 'r') as f:
         inType = False
         for line in f:
             if XS_Type_Flag in line:
@@ -37,7 +37,7 @@ def get_xs_from_html_file(nucname, XS_Type_Flag, XS_Energy_Flag):
                 for u in du:
                     unit = unit + u
                 unit = unit.partition("\\")[0]
-                data = Convert2Barns(data, unit)
+                data = convert_to_barns(data, unit)
                 return data
 
             elif inType and ("</ul>" in line):
@@ -152,7 +152,7 @@ def make_atomic_weight(h5_file="nuc_data.h5", data_file='atomic_weight.txt'):
     kdb = tb.openFile(h5_file, 'a')
 
     # Make a new the table
-    Atable = kdb.createTable("/", "A", AtomicWeightDescription, "Atomic Weight Data [amu]")
+    Atable = kdb.createTable("/", "A", atomic_weight_desc, "Atomic Weight Data [amu]")
     nuc = Atable.row
 
     with open(data_file, 'r') as f:
@@ -254,7 +254,7 @@ def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
             nucrow['iso_zz'] = iso_zz
 
             for xstf in xs_1g_type_flags:
-                nucrow[xstf] = get_xs_from_html_file(nuc, xs_1g_type_flags[xstf], xs_1g_energy_flags[xsef])
+                nucrow[xstf] = get_xs_from_html_file(nuc, data_dir, xs_1g_type_flags[xstf], xs_1g_energy_flags[xsef])
 
             nucrow['sigma_s'] = nucrow['sigma_e'] + nucrow['sigma_i']
 
