@@ -233,6 +233,9 @@ def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
     """
     # Get nulcide list from directory
     nuclist = [nuc.partition('.html')[0] for nuc in os.listdir(data_dir)]
+    nuclist_zz = isoname.LLAAAM_2_zzaaam_List(nuclist)
+    nuclist_zz.sort()
+    nuclist = isoname.zzaaam_2_LLAAAM_List(nuclist_zz)
 
     # Open the HDF5 File
     kdb = tb.openFile(h5_file, 'a')
@@ -270,4 +273,3 @@ def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
 
     # Close the hdf5 file
     kdb.close()
-
