@@ -14,4 +14,5 @@ of MetaSci is.  Obtain this functionality via::
 
    NukeGen
    IsoName
+   NukeLibrary
    Origen

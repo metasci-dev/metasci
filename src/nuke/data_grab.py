@@ -116,21 +116,20 @@ def grab_kaeri_neutron_xs(nuclist, dir_out='xs_html/'):
     param_dict = {'nuc': 'XX', 'n': 2}
 
     for nuc in nuclist:
-	    nuc_fetched = False
-	    param_dict['nuc'] = nuc
-    	params = urlencode(param_dict)
+        nuc_fetched = False
+        aram_dict['nuc'] = nuc
+        params = urlencode(param_dict)
 
-	    while not nuc_fetched:
-		    try:
-			    print("Grabbing " + nuc)
-			    kaeri = urlopen("http://atom.kaeri.re.kr/cgi-bin/nuclide?%s"%params)
-			    nuc_fetched = True
-		    except:
-			    print("Failed to grab; retrying.", end="  ")
+        while not nuc_fetched:
+            try:
+                print "Grabbing " + nuc 
+                kaeri = urlopen("http://atom.kaeri.re.kr/cgi-bin/nuclide?%s"%params)
+                nuc_fetched = True
+            except:
+                print "Failed to grab; retrying.",
 
-
-	    with open(dir_out + nuc + '.html', 'w') as f:
-		    f.write(kaeri.read())
+        with open(dir_out + nuc + '.html', 'w') as f:
+            f.write(kaeri.read())
 
 
 # The following is what I used to grab the decay library, 
