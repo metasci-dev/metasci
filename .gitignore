@@ -3,3 +3,7 @@ build/
 *.pyc
 *.save
 *.bak
+
+# Nuclear data that is probably under a restricted license
+src/nuke/xs_html/
+src/nuke/cinder.dat

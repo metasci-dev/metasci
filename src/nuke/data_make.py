@@ -66,7 +66,7 @@ decay_iso_desc = {
     'branch_ratio': tb.Float64Col(pos=6),
     }
 
-def make_decay(h5_file="nuc_data.h5", decay_file='decay.txt'):
+def make_decay(h5_file='nuc_data.h5', decay_file='decay.txt'):
     """Makes a decay table and adds it to the hdf5 library.
 
     Keyword Args:
@@ -141,7 +141,7 @@ atomic_weight_desc = {
     'abund':  tb.FloatCol(pos=4),
     }
 
-def make_atomic_weight(h5_file="nuc_data.h5", data_file='atomic_weight.txt'):
+def make_atomic_weight(h5_file='nuc_data.h5', data_file='atomic_weight.txt'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
     Keyword Args:
@@ -223,7 +223,7 @@ xs_1g_desc = {
     'sigma_4n':     tb.FloatCol(pos=16),
     }
 
-def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
+def make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
     Keyword Args:
@@ -240,8 +240,12 @@ def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
     # Open the HDF5 File
     kdb = tb.openFile(h5_file, 'a')
 
-    # Create Group
-    xs_1g_group = kdb.createGroup("/", "xs_1g", "One Group Neutron Cross Section Data")
+    # Create neutron group
+    if not hasattr(kdb.root, 'neutron'):
+        neutron_group = kdb.createGroup('/', 'neutron', 'Neutron Cross Sections')
+
+    # Create xs_1g Group
+    xs_1g_group = kdb.createGroup("/neutron", "xs_1g", "One Group Neutron Cross Section Data")
 
     # Loop through all energy types
     for xsef in xs_1g_energy_flags:
@@ -273,3 +277,39 @@ def make_xs_1g(h5_file="nuc_data.h5", data_dir='xs_html/'):
 
     # Close the hdf5 file
     kdb.close()
+
+
+###################################
+### Now for Multi-Group XS Data ###
+###################################
+
+# These read in cinder.dat
+
+#def make_xs
+
+
+def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Makes an atomic weight table and adds it to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the atomic weight text file to load data from.
+    """
+
+#    for 
+
+
+# Make the data base as a script
+if __name__ == "__main__":
+    # Clean existing file
+    if 'nuc_data.h5' in os.listdir('.'):
+        os.remove('nuc_data.h5')
+
+    # Make atomic weights
+    make_atomic_weight(h5_file='nuc_data.h5', data_file='atomic_weight.txt')
+
+    # Make decay table
+    make_decay(h5_file='nuc_data.h5', decay_file='decay.txt')
+
+    # Make one group xs library
+    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
