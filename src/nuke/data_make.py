@@ -1,7 +1,9 @@
 """Functions to make a nuclear data hdf5 file from the raw libraries."""
 import os
+import re
 import math
 
+import numpy as np
 import tables as tb
 
 import isoname
@@ -285,18 +287,82 @@ def make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/'):
 
 # These read in cinder.dat
 
-#def make_xs
+def _init_multigroup(kdb):
+    """Initializes a multigroup cross-section part of the database.
 
+    Keyword Args:
+        * kdb (tables.File): a nuclear data hdf5 file.
+    """
+
+    # Create neutron and photon groups
+    if not hasattr(kdb.root, 'neutron'):
+        neutron_group = kdb.createGroup('/', 'neutron', 'Neutron Cross Sections')
+
+    if not hasattr(kdb.root, 'photon'):
+        photon_group = kdb.createGroup('/', 'photon', 'Photon Cross Sections')
+
+    # Create xs_mg groups
+    if not hasattr(kdb.root.neutron, 'xs_mg'):
+        nxs_mg_group = kdb.createGroup("/neutron", "xs_mg", "Multi-Group Neutron Cross Section Data")
+
+    if not hasattr(kdb.root.photon, 'xs_mg'):
+        gxs_mg_group = kdb.createGroup("/photon", "xs_mg", "Multi-Group Photon Cross Section Data")
+
+
+def _get_groups_sizes(data):
+    """Gets the number of nuclides and groups in this data file.
+
+    Returns:
+        * nuclides (int): the number of nuclides in the dataset
+        * G_n (int): the number of neutron energy groups in the dataset
+        * G_p (int): the number of proton energy groups in the dataset
+        * G_g (int): the number of photon energy groups in the dataset
+    """
+    # Search for the group pattern
+    G_pattern = "(\d+) nuclides,\s+(\d+) neutron groups,\s+(\d+) proton groups,\s+(\d+) photon groups"
+    m = re.search(G_pattern, data)
+    g = m.groups()
+
+    # Convert to ints
+    nuclides = int(g[0])
+    G_n = int(g[1])
+    G_p = int(g[2])
+    G_g = int(g[3])
+
+    return nuclides, G_n, G_p, G_g
+    
+
+def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Add the energy group bounds arrays to the hdf5 library.
+
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_multigroup(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
+    print nuclides, G_n, G_p, G_g
+
+    # Close the hdf5 file
+    kdb.close()
 
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
     Keyword Args:
         * h5_file (str): path to hdf5 file.
-        * data_file (str): path to the atomic weight text file to load data from.
+        * data_file (str): path to the cinder.dat data file.
     """
 
-#    for 
+    # Add energy groups to file
+    make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
 # Make the data base as a script
@@ -312,4 +378,7 @@ if __name__ == "__main__":
     make_decay(h5_file='nuc_data.h5', decay_file='decay.txt')
 
     # Make one group xs library
-    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
+#    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
+
+    # Make multi-group xs library
+    make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat')
