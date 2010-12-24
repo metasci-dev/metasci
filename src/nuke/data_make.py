@@ -414,7 +414,9 @@ def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
     # Iterate through all from isotopes.
     for m in re.finditer(_from_iso_pattern, raw_data, re.DOTALL):
-        iso_zz = cinder_2_zzaaam(m.group(1))
+        from_iso_zz = cinder_2_zzaaam(m.group(1))
+
+        from_iso_part = m.group(0)
 
     # Close the hdf5 file
     kdb.close()
