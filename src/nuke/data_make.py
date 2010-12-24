@@ -309,8 +309,11 @@ def _init_multigroup(kdb):
         gxs_mg_group = kdb.createGroup("/photon", "xs_mg", "Multi-Group Photon Cross Section Data")
 
 
-def _get_groups_sizes(data):
+def _get_groups_sizes(raw_data):
     """Gets the number of nuclides and groups in this data file.
+
+    Args:
+        * data (str): Input cinder.dat data file as a string.
 
     Returns:
         * nuclides (int): the number of nuclides in the dataset
@@ -320,7 +323,7 @@ def _get_groups_sizes(data):
     """
     # Search for the group pattern
     G_pattern = "(\d+) nuclides,\s+(\d+) neutron groups,\s+(\d+) proton groups,\s+(\d+) photon groups"
-    m = re.search(G_pattern, data)
+    m = re.search(G_pattern, raw_data)
     g = m.groups()
 
     # Convert to ints
@@ -348,10 +351,24 @@ def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
     # Get group sizes
     nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
-    print nuclides, G_n, G_p, G_g
+
+    # Find & write neutron group structure
+    n_E_g_pattern = "Neutron group .*, MeV" + "\s+([\d.+-Ee]+)"*(G_n + 1)
+    m = re.search(n_E_g_pattern, raw_data)
+    g = m.groups()
+    n_E_g = np.array(g, dtype=float)
+    kdb.createArray('/neutron/xs_mg', 'E_g', n_E_g, 'Neutron energy group bounds [MeV]')
+
+    # Find & write photon group structure
+    g_E_g_pattern = "Gamma structure, MeV" + "\s+([\d.+-Ee]+)"*(G_g + 1)
+    m = re.search(g_E_g_pattern, raw_data)
+    g = m.groups()
+    g_E_g = np.array(g, dtype=float)
+    kdb.createArray('/photon/xs_mg', 'E_g', g_E_g, 'Photon energy group bounds [MeV]')
 
     # Close the hdf5 file
     kdb.close()
+
 
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Makes an atomic weight table and adds it to the hdf5 library.
