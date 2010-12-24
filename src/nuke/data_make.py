@@ -333,11 +333,30 @@ def _get_groups_sizes(raw_data):
     G_g = int(g[3])
 
     return nuclides, G_n, G_p, G_g
-    
+
+
+def cinder_2_zzaaam(iso_c):
+    """Converts an isotope from cinder form to zzaaam form.
+
+    Args:
+        * iso_c (str): isotope in cinder form.
+
+    Returns:
+        * iso_zz (int): isotope in zzaaam form.
+    """
+    m = int(iso_c[-1])
+    zz = int(iso_c[-4:-1])
+    aaa = int(iso_c[:-4])
+
+    iso_zz = zz*10000 + aaa*10 + m
+    return iso_zz
 
 def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Add the energy group bounds arrays to the hdf5 library.
 
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
     """
     # Open the HDF5 File
     kdb = tb.openFile(h5_file, 'a')
@@ -369,6 +388,37 @@ def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     # Close the hdf5 file
     kdb.close()
 
+# Helpful patterns
+_from_iso_pattern = "\n#[\s\d]{4}:\s+(\d+).*?\n(_______________________| [\w/-]+ Fission Yield Data)"
+
+
+def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds the absorption reaction rate cross sections to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_multigroup(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
+
+    # Iterate through all from isotopes.
+    for m in re.finditer(_from_iso_pattern, raw_data, re.DOTALL):
+        iso_zz = cinder_2_zzaaam(m.group(1))
+
+    # Close the hdf5 file
+    kdb.close()
+
 
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Makes an atomic weight table and adds it to the hdf5 library.
@@ -380,6 +430,9 @@ def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
     # Add energy groups to file
     make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+    # Add energy groups to file
+    make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
 # Make the data base as a script
