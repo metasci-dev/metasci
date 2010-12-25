@@ -306,8 +306,8 @@ def _init_multigroup(kdb):
     if not hasattr(kdb.root.neutron, 'xs_mg'):
         nxs_mg_group = kdb.createGroup("/neutron", "xs_mg", "Multi-Group Neutron Cross Section Data")
 
-    if not hasattr(kdb.root.photon, 'xs_mg'):
-        gxs_mg_group = kdb.createGroup("/photon", "xs_mg", "Multi-Group Photon Cross Section Data")
+    if not hasattr(kdb.root.photon, 'source'):
+        gxs_mg_group = kdb.createGroup("/photon", "source", "Multi-Group Photon Source Data")
 
 
 def _get_groups_sizes(raw_data):
@@ -384,7 +384,7 @@ def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     m = re.search(g_E_g_pattern, raw_data)
     g = m.groups()
     g_E_g = np.array(g, dtype=float)
-    kdb.createArray('/photon/xs_mg', 'E_g', g_E_g, 'Photon energy group bounds [MeV]')
+    kdb.createArray('/photon/source', 'E_g', g_E_g, 'Photon energy group bounds [MeV]')
 
     # Close the hdf5 file
     kdb.close()
@@ -570,6 +570,91 @@ def make_mg_fission(h5_file='nuc_data.h5', data_file='cinder.dat'):
     kdb.close()
 
 
+gamma_decay_base = "gamma spectra from .{3} multiplied by\s+(" + cinder_float + ")\s+to agree w/ Eg=\s*(" +\
+                   cinder_float + ")\n"
+
+gamma_decay_desc = {
+    'iso_LL': tb.StringCol(6, pos=0),
+    'iso_zz': tb.Int32Col(pos=1),
+
+    'energy': tb.Float64Col(pos=2),
+    'scaling_factor': tb.Float64Col(pos=3),
+
+    'spectrum': None, # Should be replaced with tb.Float64Col(shape=(G_g, ), pos=4),
+    }
+
+def make_mg_gamma_decay(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds the gamma decay spectrum information to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_multigroup(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
+
+    # Init the neutron absorption table
+    gamma_decay_desc['spectrum'] = tb.Float64Col(shape=(G_g, ), pos=4)
+    gamma_decay_table = kdb.createTable('/photon/source/', 'decay_spectra', gamma_decay_desc, 
+                                        'Gamma decay spectrum [MeV]')
+    gdrow = gamma_decay_table.row
+
+    # Init to_iso_pattern
+    gamma_decay_pattern = gamma_decay_base + ("\s+("+cinder_float+")")*G_g
+
+    # Iterate through all from isotopes.
+    for m_from in re.finditer(from_iso_pattern, raw_data, re.DOTALL):
+        from_iso_zz = cinder_2_zzaaam(m_from.group(1))
+
+        # Check matestable state
+        if 1 < from_iso_zz%10:
+            # Metastable state too high!
+            continue
+        from_iso_LL = isoname.zzaaam_2_LLAAAM(from_iso_zz)
+
+        # Grab the string for this from_iso in order to get all of the to_isos
+        from_iso_part = m_from.group(0)
+
+        # Grab the fission part
+        m_gd = re.search(gamma_decay_pattern, from_iso_part)
+        if m_gd is None:
+            continue
+
+        # Grab base data
+        scale = float(m_gd.group(1))
+        energy = float(m_gd.group(2))
+
+        # Grab spectrum
+        spectrum = np.array(m_gd.groups()[2:], dtype=float)
+        assert spectrum.shape == (G_g, )
+
+        # Prepare the row
+        gdrow['iso_LL'] = from_iso_LL
+        gdrow['iso_zz'] = from_iso_zz
+
+        gdrow['energy'] = energy
+        gdrow['scaling_factor'] = scale
+
+        gdrow['spectrum'] = spectrum
+
+        # Write out the row
+        gdrow.append()
+        gamma_decay_table.flush()
+
+    # Close the hdf5 file
+    kdb.close()
+
+
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
@@ -586,6 +671,9 @@ def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
     # Add fission to file
     make_mg_fission(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+    # Add gamma decay spectrum to file
+    make_mg_gamma_decay(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
 # Make the data base as a script
