@@ -286,6 +286,7 @@ def make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/'):
 ###################################
 
 # These read in cinder.dat
+cinder_float = "[\d.+-Ee]+"
 
 def _init_multigroup(kdb):
     """Initializes a multigroup cross-section part of the database.
@@ -372,14 +373,14 @@ def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
 
     # Find & write neutron group structure
-    n_E_g_pattern = "Neutron group .*, MeV" + "\s+([\d.+-Ee]+)"*(G_n + 1)
+    n_E_g_pattern = "Neutron group .*, MeV" + ("\s+("+cinder_float+")")*(G_n + 1)
     m = re.search(n_E_g_pattern, raw_data)
     g = m.groups()
     n_E_g = np.array(g, dtype=float)
     kdb.createArray('/neutron/xs_mg', 'E_g', n_E_g, 'Neutron energy group bounds [MeV]')
 
     # Find & write photon group structure
-    g_E_g_pattern = "Gamma structure, MeV" + "\s+([\d.+-Ee]+)"*(G_g + 1)
+    g_E_g_pattern = "Gamma structure, MeV" + ("\s+("+cinder_float+")")*(G_g + 1)
     m = re.search(g_E_g_pattern, raw_data)
     g = m.groups()
     g_E_g = np.array(g, dtype=float)
@@ -389,8 +390,19 @@ def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     kdb.close()
 
 # Helpful patterns
-_from_iso_pattern = "\n#[\s\d]{4}:\s+(\d+).*?\n(_______________________| [\w/-]+ Fission Yield Data)"
+from_iso_pattern = "\n#[\s\d]{4}:\s+(\d+).*?\n(_______________________| [\w/-]+ Fission Yield Data)"
+to_iso_base = "#[\s\d]{4}:\s+(\d+) produced by the following C-X  \((.{4})\) REF:.*?\n"
 
+absorption_desc = {
+    'from_iso_LL': tb.StringCol(6, pos=0),
+    'from_iso_zz': tb.Int32Col(pos=1),
+
+    'to_iso_LL': tb.StringCol(6, pos=2),
+    'to_iso_zz': tb.Int32Col(pos=3),
+
+    'reaction_type': tb.StringCol(4, pos=4),
+    'xs': None, # Should be replaced with tb.Float64Col(shape=(G_n, ), pos=5),    
+    }
 
 def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Adds the absorption reaction rate cross sections to the hdf5 library.
@@ -412,11 +424,60 @@ def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
     # Get group sizes
     nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
 
-    # Iterate through all from isotopes.
-    for m in re.finditer(_from_iso_pattern, raw_data, re.DOTALL):
-        from_iso_zz = cinder_2_zzaaam(m.group(1))
+    # Init the neutron absorption table
+    absorption_desc['xs'] = tb.Float64Col(shape=(G_n, ), pos=5)
+    absorption_table = kdb.createTable('/neutron/xs_mg/', 'absorption', absorption_desc, 
+                                       'Neutron absorption reaction rate cross sections [barns]')
+    abrow = absorption_table.row
 
-        from_iso_part = m.group(0)
+    # Init to_iso_pattern
+    to_iso_pattern = to_iso_base + ("\s+("+cinder_float+")")*G_n
+
+    # Iterate through all from isotopes.
+    for m_from in re.finditer(from_iso_pattern, raw_data, re.DOTALL):
+        from_iso_zz = cinder_2_zzaaam(m_from.group(1))
+
+        # Check matestable state
+        if 1 < from_iso_zz%10:
+            # Metastable state too high!
+            continue
+        from_iso_LL = isoname.zzaaam_2_LLAAAM(from_iso_zz)
+
+        # Grab the string for this from_iso in order to get all of the to_isos
+        from_iso_part = m_from.group(0)
+
+        # Iterate over all to_isos
+        for m_to in re.finditer(to_iso_pattern, from_iso_part):
+            to_iso_zz = cinder_2_zzaaam(m_to.group(1))
+
+            # Check matestable state
+            if 1 < to_iso_zz%10:
+                # Metastable state too high!
+                continue
+            to_iso_LL = isoname.zzaaam_2_LLAAAM(to_iso_zz)
+
+            # Munge reaction type
+            rx_type = m_to.group(2)
+            rx_type = rx_type.strip()
+
+            # Setup XS array
+            xs = np.array(m_to.groups()[2:])
+            assert xs.shape == (G_n, )
+
+            # Write this row to the absorption table
+            abrow['from_iso_LL'] = from_iso_LL
+            abrow['from_iso_zz'] = from_iso_zz
+
+            abrow['to_iso_LL'] = to_iso_LL
+            abrow['to_iso_zz'] = to_iso_zz
+
+            abrow['reaction_type'] = rx_type
+            abrow['xs'] = xs
+
+            abrow.append()
+
+        # Flush this from iso
+        absorption_table.flush()
 
     # Close the hdf5 file
     kdb.close()
