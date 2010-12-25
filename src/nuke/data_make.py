@@ -461,7 +461,7 @@ def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
             rx_type = rx_type.strip()
 
             # Setup XS array
-            xs = np.array(m_to.groups()[2:])
+            xs = np.array(m_to.groups()[2:], dtype=float)
             assert xs.shape == (G_n, )
 
             # Write this row to the absorption table
@@ -483,6 +483,93 @@ def make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat'):
     kdb.close()
 
 
+fission_base = "\n([\s\d]+),([\s\d]+),([\s\d]+)=\(n,f\) yield sets\. If > 0,[\s\d]{4}-gp fisn CX follows\..*?\n"
+
+fission_desc = {
+    'iso_LL': tb.StringCol(6, pos=0),
+    'iso_zz': tb.Int32Col(pos=1),
+
+    'thermal_yield':     tb.Int8Col(pos=2),
+    'fast_yield':        tb.Int8Col(pos=3),
+    'high_energy_yield': tb.Int8Col(pos=4),
+
+    'xs': None, # Should be replaced with tb.Float64Col(shape=(G_n, ), pos=5),    
+    }
+
+def make_mg_fission(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds the fission reaction rate cross sections to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_multigroup(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
+
+    # Init the neutron absorption table
+    fission_desc['xs'] = tb.Float64Col(shape=(G_n, ), pos=5)
+    fission_table = kdb.createTable('/neutron/xs_mg/', 'fission', fission_desc, 
+                                    'Neutron fission reaction rate cross sections [barns]')
+    frow = fission_table.row
+
+    # Init to_iso_pattern
+    fission_pattern = fission_base + ("\s+("+cinder_float+")")*G_n
+
+    # Iterate through all from isotopes.
+    for m_from in re.finditer(from_iso_pattern, raw_data, re.DOTALL):
+        from_iso_zz = cinder_2_zzaaam(m_from.group(1))
+
+        # Check matestable state
+        if 1 < from_iso_zz%10:
+            # Metastable state too high!
+            continue
+        from_iso_LL = isoname.zzaaam_2_LLAAAM(from_iso_zz)
+
+        # Grab the string for this from_iso in order to get all of the to_isos
+        from_iso_part = m_from.group(0)
+
+        # Grab the fission part
+        m_fission = re.search(fission_pattern, from_iso_part)
+        if m_fission is None:
+            continue
+
+        # Grab yield indexes
+        yield_t = int(m_fission.group(1))
+        yield_f = int(m_fission.group(2))
+        yield_h = int(m_fission.group(3))
+
+        # Grab XS array
+        xs = np.array(m_fission.groups()[3:], dtype=float)
+        assert xs.shape == (G_n, )
+
+        # Write fission table row
+        frow['iso_LL'] = from_iso_LL
+        frow['iso_zz'] = from_iso_zz
+
+        frow['thermal_yield']     = yield_t
+        frow['fast_yield']        = yield_f
+        frow['high_energy_yield'] = yield_h
+
+        frow['xs'] = xs
+
+        # Write out this row
+        frow.append()
+        fission_table.flush()
+
+    # Close the hdf5 file
+    kdb.close()
+
+
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Makes an atomic weight table and adds it to the hdf5 library.
 
@@ -494,8 +581,11 @@ def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     # Add energy groups to file
     make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat')
 
-    # Add energy groups to file
+    # Add neutron absorption to file
     make_mg_absorption(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+    # Add fission to file
+    make_mg_fission(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
 # Make the data base as a script
