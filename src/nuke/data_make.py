@@ -1107,10 +1107,10 @@ if __name__ == "__main__":
     make_decay(h5_file='nuc_data.h5', decay_file='decay.txt')
 
     # Make one group xs library
-#    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
+    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
 
     # Make multi-group xs library
-#    make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat')
+    make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat')
 
     # Make fission product yield library
     make_fission_products(h5_file='nuc_data.h5', data_file='cinder.dat')
