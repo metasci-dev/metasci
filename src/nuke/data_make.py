@@ -306,8 +306,17 @@ def _init_multigroup(kdb):
     if not hasattr(kdb.root.neutron, 'xs_mg'):
         nxs_mg_group = kdb.createGroup("/neutron", "xs_mg", "Multi-Group Neutron Cross Section Data")
 
+    # Create source groups
     if not hasattr(kdb.root.photon, 'source'):
         gxs_mg_group = kdb.createGroup("/photon", "source", "Multi-Group Photon Source Data")
+
+    # Create fission_yield groups
+    if not hasattr(kdb.root.neutron, 'fission_products'):
+        nxs_mg_group = kdb.createGroup("/neutron", "fission_products", "Neutron Fission Product Yield Data")
+
+    if not hasattr(kdb.root.photon, 'fission_products'):
+        nxs_mg_group = kdb.createGroup("/photon", "fission_products", "Photofission Product Yield Data")
+
 
 
 def _get_groups_sizes(raw_data):
@@ -351,6 +360,7 @@ def cinder_2_zzaaam(iso_c):
 
     iso_zz = zz*10000 + aaa*10 + m
     return iso_zz
+
 
 def make_mg_group_structure(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Add the energy group bounds arrays to the hdf5 library.
@@ -603,7 +613,7 @@ def make_mg_gamma_decay(h5_file='nuc_data.h5', data_file='cinder.dat'):
     # Get group sizes
     nuclides, G_n, G_p, G_g = _get_groups_sizes(raw_data)
 
-    # Init the neutron absorption table
+    # Init the gamma absorption table
     gamma_decay_desc['spectrum'] = tb.Float64Col(shape=(G_g, ), pos=4)
     gamma_decay_table = kdb.createTable('/photon/source/', 'decay_spectra', gamma_decay_desc, 
                                         'Gamma decay spectrum [MeV]')
@@ -656,7 +666,7 @@ def make_mg_gamma_decay(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
 
 def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
-    """Makes an atomic weight table and adds it to the hdf5 library.
+    """Adds multi-group cross-section data to the hdf5 library from CINDER.
 
     Keyword Args:
         * h5_file (str): path to hdf5 file.
@@ -676,7 +686,164 @@ def make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat'):
     make_mg_gamma_decay(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
-# Make the data base as a script
+
+#######################################
+### Make Fission Product Yield Data ###
+#######################################
+
+
+def _init_fission_products(kdb):
+    """Initializes the fission product part of the database.
+
+    Keyword Args:
+        * kdb (tables.File): a nuclear data hdf5 file.
+    """
+
+    # Create neutron and photon groups
+    if not hasattr(kdb.root, 'neutron'):
+        neutron_group = kdb.createGroup('/', 'neutron', 'Neutron Cross Sections')
+
+    if not hasattr(kdb.root, 'photon'):
+        photon_group = kdb.createGroup('/', 'photon', 'Photon Cross Sections')
+
+    # Create fission_yield groups
+    if not hasattr(kdb.root.neutron, 'fission_products'):
+        nfp_group = kdb.createGroup("/neutron", "fission_products", "Neutron Fission Product Yield Data")
+
+    if not hasattr(kdb.root.photon, 'fission_products'):
+        gfp_group = kdb.createGroup("/photon", "fission_products", "Photofission Product Yield Data")
+
+
+def _get_fp_sizes(raw_data):
+    """Gets the number of fission product yield data sets in this file.
+
+    Args:
+        * data (str): Input cinder.dat data file as a string.
+
+    Returns:
+        * N_n (int): the number of neutron fission product yield datasets in the file
+        * N_g (int): the number of photon fission product yield datasets in the file
+    """
+    # Search for the neutron pattern
+    N_n_pattern = "Fission Yield Data.*?\n\s*(\d+)\s+yield sets"
+    m_n = re.search(N_n_pattern, raw_data)
+    N_n = int(m_n.group(1))
+
+    # Search for the photon pattern
+    N_g_pattern = "Photofission Yield Data.*?\n\s*(\d+)\s+yield sets"
+    m_g = re.search(N_g_pattern, raw_data)
+    N_g = int(m_g.group(1))
+
+    return N_n, N_g
+
+
+fp_info_desc = {
+    'index': tb.Int16Col(pos=0),
+
+    'iso_LL': tb.StringCol(6, pos=1),
+    'iso_zz': tb.Int32Col(pos=2),
+
+    'type': tb.StringCol(11, pos=3),
+    'mass': tb.Float64Col(pos=4),
+    }
+
+fp_type_flag = {
+    't': 'thermal', 
+    'f': 'fast',
+    'h': 'high_energy', 
+    's': 'spontaneous', 
+    }
+
+iit_pattern = "(\d{1,3})\s+\d{2,3}-\s?([A-Z]{1,2}-[ Mm\d]{3})([tfhs])"
+mass_pattern = "\d{1,3}\.\d{1,4}"
+
+nfp_info_pattern = "Fission Yield Data.*?fission products"
+
+def make_neutron_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds the gamma decay spectrum information to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_fission_products(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    N_n, N_g = _get_fp_sizes(raw_data)
+
+    # Grab the part of the file that is a neutron fission product yiled info
+    m_info = re.search(nfp_info_pattern, raw_data, re.DOTALL)
+    nfp_info_raw = m_info.group(0)
+
+    # Grab the index, isotope, and type
+    iits = re.findall(iit_pattern, nfp_info_raw)
+
+    # Grab the masses 
+    masses = re.findall(mass_pattern, nfp_info_raw)
+
+    # Make sure data is the right size
+    assert N_n == len(iits) 
+    assert N_n == len(masses)
+
+    # Init the neutron fission product info table
+    nfp_table = kdb.createTable('/neutron/fission_products/', 'info', fp_info_desc, 
+                                        'Neutron Fission Product Yield Information')
+    nfprow = nfp_table.row
+
+    # Write out info table rows 
+    for m in range(N_n):
+        iit = iits[m]
+        index = int(iit[0])
+
+        iso_zz = isoname.LLAAAM_2_zzaaam(iit[1])
+        # Correct for metastable flag
+        if 0 != iso_zz%10:
+            iso_zz = iso_zz + 2000
+
+        iso_LL = isoname.zzaaam_2_LLAAAM(iso_zz)
+        type = fp_type_flag[iit[2]]
+        mass = float(masses[m])
+
+        # Prep row
+        nfprow['index'] = index
+        nfprow['iso_LL'] = iso_LL
+        nfprow['iso_zz'] = iso_zz
+        nfprow['type'] = type
+        nfprow['mass'] = mass
+
+        # Write out row
+        nfprow.append()
+        nfp_table.flush()
+
+    # Close the hdf5 file
+    kdb.close()
+
+
+
+def make_fission_products(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds fission-product data to the hdf5 library from CINDER.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Add neutro info table
+    make_neutron_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+
+
+######################################
+### Make the data base as a script ###
+######################################
+
 if __name__ == "__main__":
     # Clean existing file
     if 'nuc_data.h5' in os.listdir('.'):
@@ -692,4 +859,7 @@ if __name__ == "__main__":
 #    make_xs_1g(h5_file='nuc_data.h5', data_dir='xs_html/')
 
     # Make multi-group xs library
-    make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat')
+#    make_xs_mg(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+    # Make fission product yield library
+    make_fission_products(h5_file='nuc_data.h5', data_file='cinder.dat')
