@@ -1,4 +1,5 @@
 """MetaSci Nuclear Basics"""
+import os
 
 # Prefer importing the system version of isoname
 # over the package one.  This is because the system
@@ -9,6 +10,9 @@ try:
 except:
     import IsoName as isoname
 
+
+nuc_data = os.path.join(os.path.split(__file__)[0], 'nuc_data.h5')
+"""The path to the nuc_data.h5 database file."""
 
 def cell_power(Material, SpecificPower, CellVolume, Density):
     """Calculates the power from a given unit cell.
