@@ -967,7 +967,7 @@ def make_neutron_fp_yields(h5_file='nuc_data.h5', data_file='cinder.dat'):
     nfprow = nfp_table.row
 
     # Iterate over all to-isos
-    fp_to_iso_pattern = fp_to_iso_base + 60*fp_to_iso_insert + ")"
+    fp_to_iso_pattern = fp_to_iso_base + N_n*fp_to_iso_insert + ")"
     for m_to in re.finditer(fp_to_iso_pattern, nfp_yields_raw):
         to_iso_zz = cinder_2_zzaaam(m_to.group(2))
 
@@ -1001,6 +1001,75 @@ def make_neutron_fp_yields(h5_file='nuc_data.h5', data_file='cinder.dat'):
     kdb.close()
 
 
+gfp_yields_pattern = "Photofission Yield Data.*"
+
+def make_photon_fp_yields(h5_file='nuc_data.h5', data_file='cinder.dat'):
+    """Adds the photofission product yields to the hdf5 library.
+
+    Keyword Args:
+        * h5_file (str): path to hdf5 file.
+        * data_file (str): path to the cinder.dat data file.
+    """
+    # Open the HDF5 File
+    kdb = tb.openFile(h5_file, 'a')
+
+    # Ensure that the appropriate file structure is present
+    _init_fission_products(kdb)
+
+    # Read in cinder data file
+    with open(data_file, 'r') as f:
+        raw_data = f.read()
+
+    # Get group sizes
+    N_n, N_g = _get_fp_sizes(raw_data)
+
+    # get the info table
+    info_table = _grab_photon_fp_info(raw_data)
+
+    # Grab the part of the file that is a neutron fission product yields
+    m_yields = re.search(gfp_yields_pattern, raw_data, re.DOTALL)
+    gfp_yields_raw = m_yields.group(0)
+
+    # Init the neutron fission product info table
+    gfp_table = kdb.createTable('/photon/fission_products/', 'yields', fp_yields_desc, 
+                                'Photofission Product Yields')
+    gfprow = gfp_table.row
+
+    # Iterate over all to-isos
+    fp_to_iso_pattern = fp_to_iso_base + N_g*fp_to_iso_insert + ")"
+    for m_to in re.finditer(fp_to_iso_pattern, gfp_yields_raw):
+        to_iso_zz = cinder_2_zzaaam(m_to.group(2))
+
+        # Check matestable state
+        if 1 < to_iso_zz%10:
+            # Metastable state too high!
+            continue
+        to_iso_LL = isoname.zzaaam_2_LLAAAM(to_iso_zz)
+
+        # Get the array of yield data
+        yields = np.array(m_to.group(3).split(), dtype=float)
+        assert len(yields) == N_g
+
+        # Prep rows to the table
+        for n in range(N_g):
+            info = info_table[n]
+
+            gfprow['index'] = info[0]
+            gfprow['from_iso_LL'] = info[1]
+            gfprow['from_iso_zz'] = info[2]
+            gfprow['to_iso_LL'] = to_iso_LL
+            gfprow['to_iso_zz'] = to_iso_zz
+            gfprow['mass_frac'] = yields[n]
+
+            gfprow.append()
+
+        # Write the table
+        gfp_table.flush()
+
+    # Close the hdf5 file
+    kdb.close()
+
+
 def make_fission_products(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Adds fission-product data to the hdf5 library from CINDER.
 
@@ -1016,6 +1085,9 @@ def make_fission_products(h5_file='nuc_data.h5', data_file='cinder.dat'):
 
     # Add photon info table
     make_photon_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat')
+
+    # Add neutron yield table
+    make_photon_fp_yields(h5_file='nuc_data.h5', data_file='cinder.dat')
 
 
 
