@@ -11,6 +11,6 @@ setup(name="MetaSci",
 	url='http://www.scopatz.com/',
 	packages=['metasci', 'metasci.chem', 'metasci.mathematics', 'metasci.nuke', 'metasci.stats'],
 	package_dir={'metasci': 'src'}, 
-#	package_data={'metasci': []},
+	package_data={'metasci': ['nuke/nuc_data.h5']},
 	)
 
