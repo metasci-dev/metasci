@@ -759,6 +759,54 @@ mass_pattern = "\d{1,3}\.\d{1,4}"
 
 nfp_info_pattern = "Fission Yield Data.*?fission products"
 
+def _grab_neutron_fp_info(raw_data):
+    """Grabs the neutron fission product info.
+
+    Args:
+        * raw_data (str): string of the cinder.dat data file.
+
+    Returns:
+        * info_table (list of tuples): elements are tuples that have the form 
+          "(index, iso_LL, iso_zz, type, mass)". 
+    """
+    # Get group sizes
+    N_n, N_g = _get_fp_sizes(raw_data)
+
+    # Grab the part of the file that is a neutron fission product yield info
+    m_info = re.search(nfp_info_pattern, raw_data, re.DOTALL)
+    nfp_info_raw = m_info.group(0)
+
+    # Grab the index, isotope, and type
+    iits = re.findall(iit_pattern, nfp_info_raw)
+
+    # Grab the masses 
+    masses = re.findall(mass_pattern, nfp_info_raw)
+
+    # Make sure data is the right size
+    assert N_n == len(iits) 
+    assert N_n == len(masses)
+
+    # Make info table rows 
+    info_table = []
+    for m in range(N_n):
+        iit = iits[m]
+        index = int(iit[0])
+
+        iso_zz = isoname.LLAAAM_2_zzaaam(iit[1])
+        # Correct for metastable flag
+        if 0 != iso_zz%10:
+            iso_zz = iso_zz + 2000
+
+        iso_LL = isoname.zzaaam_2_LLAAAM(iso_zz)
+        type = fp_type_flag[iit[2]]
+        mass = float(masses[m])
+
+        info_row = (index, iso_LL, iso_zz, type, mass)
+        info_table.append(info_row)
+
+    return info_table
+
+
 def make_neutron_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Adds the neutron fission product yield info to the hdf5 library.
 
@@ -776,30 +824,52 @@ def make_neutron_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
     with open(data_file, 'r') as f:
         raw_data = f.read()
 
-    # Get group sizes
-    N_n, N_g = _get_fp_sizes(raw_data)
-
-    # Grab the part of the file that is a neutron fission product yiled info
-    m_info = re.search(nfp_info_pattern, raw_data, re.DOTALL)
-    nfp_info_raw = m_info.group(0)
-
-    # Grab the index, isotope, and type
-    iits = re.findall(iit_pattern, nfp_info_raw)
-
-    # Grab the masses 
-    masses = re.findall(mass_pattern, nfp_info_raw)
-
-    # Make sure data is the right size
-    assert N_n == len(iits) 
-    assert N_n == len(masses)
+    # get the info table
+    info_table = _grab_neutron_fp_info(raw_data)
 
     # Init the neutron fission product info table
     nfp_table = kdb.createTable('/neutron/fission_products/', 'info', fp_info_desc, 
                                 'Neutron Fission Product Yield Information')
-    nfprow = nfp_table.row
 
-    # Write out info table rows 
-    for m in range(N_n):
+    # Append Rows
+    nfp_table.append(info_table)
+
+    # Close the hdf5 file
+    kdb.close()
+
+
+gfp_info_pattern = "Photofission Yield Data.*?fission products"
+
+def _grab_photon_fp_info(raw_data):
+    """Grabs the photon fission product info.
+
+    Args:
+        * raw_data (str): string of the cinder.dat data file.
+
+    Returns:
+        * info_table (list of tuples): elements are tuples that have the form 
+          "(index, iso_LL, iso_zz, type, mass)". 
+    """
+    # Get group sizes
+    N_n, N_g = _get_fp_sizes(raw_data)
+
+    # Grab the part of the file that is a neutron fission product yield info
+    m_info = re.search(gfp_info_pattern, raw_data, re.DOTALL)
+    gfp_info_raw = m_info.group(0)
+
+    # Grab the index, isotope, and type
+    iits = re.findall(iit_pattern, gfp_info_raw)
+
+    # Grab the masses 
+    masses = re.findall(mass_pattern, gfp_info_raw)
+
+    # Make sure data is the right size
+    assert N_g == len(iits) 
+    assert N_g == len(masses)
+
+    # Make info table rows 
+    info_table = []
+    for m in range(N_g):
         iit = iits[m]
         index = int(iit[0])
 
@@ -812,22 +882,10 @@ def make_neutron_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
         type = fp_type_flag[iit[2]]
         mass = float(masses[m])
 
-        # Prep row
-        nfprow['index'] = index
-        nfprow['iso_LL'] = iso_LL
-        nfprow['iso_zz'] = iso_zz
-        nfprow['type'] = type
-        nfprow['mass'] = mass
+        info_row = (index, iso_LL, iso_zz, type, mass)
+        info_table.append(info_row)
 
-        # Write out row
-        nfprow.append()
-        nfp_table.flush()
-
-    # Close the hdf5 file
-    kdb.close()
-
-
-gfp_info_pattern = "Photofission Yield Data.*?fission products"
+    return info_table
 
 def make_photon_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
     """Adds the photofission product yield info to the hdf5 library.
@@ -846,52 +904,13 @@ def make_photon_fp_info(h5_file='nuc_data.h5', data_file='cinder.dat'):
     with open(data_file, 'r') as f:
         raw_data = f.read()
 
-    # Get group sizes
-    N_n, N_g = _get_fp_sizes(raw_data)
-
-    # Grab the part of the file that is a neutron fission product yiled info
-    m_info = re.search(gfp_info_pattern, raw_data, re.DOTALL)
-    gfp_info_raw = m_info.group(0)
-
-    # Grab the index, isotope, and type
-    iits = re.findall(iit_pattern, gfp_info_raw)
-
-    # Grab the masses 
-    masses = re.findall(mass_pattern, gfp_info_raw)
-
-    # Make sure data is the right size
-    assert N_g == len(iits) 
-    assert N_g == len(masses)
+    # Grab photon info table
+    info_table = _grab_photon_fp_info(raw_data)
 
     # Init the neutron fission product info table
     gfp_table = kdb.createTable('/photon/fission_products/', 'info', fp_info_desc, 
                                 'Photofission Product Yield Information')
-    gfprow = gfp_table.row
-
-    # Write out info table rows 
-    for m in range(N_g):
-        iit = iits[m]
-        index = int(iit[0])
-
-        iso_zz = isoname.LLAAAM_2_zzaaam(iit[1])
-        # Correct for metastable flag
-        if 0 != iso_zz%10:
-            iso_zz = iso_zz + 2000
-
-        iso_LL = isoname.zzaaam_2_LLAAAM(iso_zz)
-        type = fp_type_flag[iit[2]]
-        mass = float(masses[m])
-
-        # Prep row
-        gfprow['index'] = index
-        gfprow['iso_LL'] = iso_LL
-        gfprow['iso_zz'] = iso_zz
-        gfprow['type'] = type
-        gfprow['mass'] = mass
-
-        # Write out row
-        gfprow.append()
-        gfp_table.flush()
+    gfp_table.append(info_table)
 
     # Close the hdf5 file
     kdb.close()
@@ -935,37 +954,8 @@ def make_neutron_fp_yields(h5_file='nuc_data.h5', data_file='cinder.dat'):
     # Get group sizes
     N_n, N_g = _get_fp_sizes(raw_data)
 
-    # Grab the part of the file that is a neutron fission product yield info
-    m_info = re.search(nfp_info_pattern, raw_data, re.DOTALL)
-    nfp_info_raw = m_info.group(0)
-
-    # Grab the index, isotope, and type
-    iits = re.findall(iit_pattern, nfp_info_raw)
-
-    # Grab the masses 
-    masses = re.findall(mass_pattern, nfp_info_raw)
-
-    # Make sure data is the right size
-    assert N_n == len(iits) 
-    assert N_n == len(masses)
-
-    # Make info table rows 
-    info_table = []
-    for m in range(N_n):
-        iit = iits[m]
-        index = int(iit[0])
-
-        iso_zz = isoname.LLAAAM_2_zzaaam(iit[1])
-        # Correct for metastable flag
-        if 0 != iso_zz%10:
-            iso_zz = iso_zz + 2000
-
-        iso_LL = isoname.zzaaam_2_LLAAAM(iso_zz)
-        type = fp_type_flag[iit[2]]
-        mass = float(masses[m])
-
-        info_row = [index, iso_LL, iso_zz, type, mass]
-        info_table.append(info_row)
+    # get the info table
+    info_table = _grab_neutron_fp_info(raw_data)
 
     # Grab the part of the file that is a neutron fission product yields
     m_yields = re.search(nfp_yields_pattern, raw_data, re.DOTALL)
