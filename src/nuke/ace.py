@@ -2,6 +2,8 @@
 import re
 import linecache
 
+import numpy as np
+
 import isoname
 
 
@@ -34,6 +36,7 @@ def parse_zaid(zaid):
     type = m.group(3)
 
     return iso, temp, type
+
 
 def zaids(ace_file):
     """Grabs the ZAIDs available from an ACE file.
@@ -75,6 +78,7 @@ def zaids(ace_file):
 
     return zaids
 
+
 def mt(zaid, ace_file):
     """Grabs the MT numbers for a specific isotope out of an ACE file.
 
@@ -86,15 +90,45 @@ def mt(zaid, ace_file):
     Returns:
         * mt (set): A set of all valid MT numbers for this zaid.
     """
+    # Grab the line number that the ZAIDS of this ACE file start on
+    zs = zaids(ace_file)
 
-    pass
+    # Verify that the ZAID is in the file
+    if zaid not in zs:
+        raise ValueError("The ZAID {0} is not in the file {1}".format(zaid, ace_file))
 
+    # Get the number of MTs for this ZAID
+    number_of_mts_line = linecache.getline(ace_file, zs[zaid] - 1 + 7)
+    number_of_mts = int(number_of_mts_line.split()[3])
+
+    # Get the index of the first MT number in the table
+    mts_index_line = linecache.getline(ace_file, zs[zaid] - 1 + 9)
+    mts_index = int(mts_index_line.split()[2])
+
+    # Get the MTs
+    mts_first_line_num = zs[zaid] - 1 + 13 + ((mts_index - 1) / 4)
+    mts_lines = [linecache.getline(ace_file, mts_first_line_num + n) for n in range(number_of_mts/4 + 2)]
+
+    mts = []
+    for line in mts_lines:
+        print line
+        mts.extend(line.split())
+
+    offset = (mts_index - 1)%4
+    mts = mts[offset:offset + number_of_mts]
+    mts = np.array(mts, dtype=int)
+
+    mt = set(mts)
+    assert len(mt) == number_of_mts
+
+    return mt
 
 if __name__ == "__main__":
-    ace = "/usr/share/serpent/xsdata/ENDF7/95342ENDF7.ace"
-    zaid = "95342.12c"
+    ace = "/usr/share/serpent/xsdata/ENDF7/95242ENDF7.ace"
+    zaid = "95242.09c"
     
     z = zaids(ace)
     mts = mt(zaid, ace)
 
     print z 
+    print mts
