@@ -563,7 +563,7 @@ def LogLabelConvert(xy, plot, base = 10.0):
 ### Other Functions ###
 #######################
 
-def SafeRemove(p, IsDir = False):
+def safe_remove(p, IsDir = False):
     """Trys to remove file(s), even if non-existent.
     
     Args:
@@ -587,12 +587,37 @@ def SafeRemove(p, IsDir = False):
         
     return
 
+
+def clean_reload(module):
+    """Reloads a module, but cleans the content first.  This prevents artefacts from 
+    previous imports remaining in the namespace when they shouldn't be.
+
+    Args:
+        * modoule (module): A python module object to be reloaded.
+    """
+    attrs = dir(module)
+
+    for attr in attrs:
+        # Skip certain data types: empty and magic
+        if (len(attr) == 0):
+            continue
+        if (1 < len(attr)) and (attr[:2] == '__'):
+            continue
+
+        # Deref other attributes
+        exec 'del module.' + attr
+
+    # Finally, reload module
+    reload(module)
+
+
 def max_csv(csv_file, col=0):
     reader = csv.reader(open(csv_file, 'rb'))
     l = []
     for row in reader:
         l.append(row[col])
     return max(l)
+
 
 def max_len_csv(csv_file, col=0):
     reader = csv.reader(open(csv_file, 'rb'))
@@ -601,5 +626,3 @@ def max_len_csv(csv_file, col=0):
         l.append( (len(row[col]), row[col]) )
     return max(l)
 
-#Automatically imported modules
-import data
