@@ -105,10 +105,11 @@ def mt(zaid, ace_file):
     mts_index_line = linecache.getline(ace_file, zs[zaid] - 1 + 9)
     mts_index = int(mts_index_line.split()[2])
 
-    # Get the MTs
+    # Get the MT lines
     mts_first_line_num = zs[zaid] - 1 + 13 + ((mts_index - 1) / 4)
     mts_lines = [linecache.getline(ace_file, mts_first_line_num + n) for n in range(number_of_mts/4 + 2)]
 
+    # Convert the lines to a list
     mts = []
     for line in mts_lines:
         print line
@@ -118,6 +119,7 @@ def mt(zaid, ace_file):
     mts = mts[offset:offset + number_of_mts]
     mts = np.array(mts, dtype=int)
 
+    # Covert the list to a set and verify it is the right length
     mt = set(mts)
     assert len(mt) == number_of_mts
 
