@@ -112,7 +112,6 @@ def mt(zaid, ace_file):
     # Convert the lines to a list
     mts = []
     for line in mts_lines:
-        print line
         mts.extend(line.split())
 
     offset = (mts_index - 1)%4
