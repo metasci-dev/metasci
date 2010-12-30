@@ -16,3 +16,4 @@ of MetaSci is.  Obtain this functionality via::
    IsoName
    NukeLibrary
    Origen
+   ACE
