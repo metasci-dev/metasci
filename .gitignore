@@ -1,9 +1,13 @@
+# Ignore build files
 doc/build/
 build/
+*egg-info/
+
+# Ignore non-source files
 *.pyc
 *.save
 *.bak
 
 # Nuclear data that is probably under a restricted license
-src/nuke/xs_html/
-src/nuke/cinder.dat
+metasci/nuke/xs_html/
+metasci/nuke/cinder.dat

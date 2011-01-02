@@ -13,6 +13,7 @@ from . import nuc_data
 ###############################################################################
     
 class XSCache(dict):
+    """A lightweight cross-section cache based off of python dictionaries."""
 
     def __getitem__(self, key):
         """Overwrites the dict's key lookup by prodiving some custom loading
@@ -27,6 +28,38 @@ class XSCache(dict):
         return super(XSCache, self).__getitem__(key)
 
 xs_cache = XSCache()
+
+
+##############################
+### Partial group collapse ###
+##############################
+
+def phi_g(E_g, E_n, phi_n):
+    """Calculates the lower resolution flux, phi_g, from the lower resolution group stucture E_g, 
+    the higher resolution groups E_n, and the higher resolution flux phi_n.
+
+    Args:
+        * E_g (sequence of floats): lower resolution energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns: 
+        * phi_g_array (numpy array of floats): The flux collapsed to G energy groups.
+    """
+
+    g_to_n_mask = np.array(E_g[g] <= E_n < E_g[g]  for g in range(len(E_g) - 1))
+    print 
+
+    #phi_g = 
+
+#def partial_group_collapse()
+
+################################
+### Cross-section generators ###
+################################
 
 def sigma_f(iso, E_g, phi_n):
     """Calculates the neutron fission cross-section for an isotope for a new, lower resolution
