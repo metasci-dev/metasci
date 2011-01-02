@@ -49,11 +49,27 @@ def phi_g(E_g, E_n, phi_n):
     Returns: 
         * phi_g_array (numpy array of floats): The flux collapsed to G energy groups.
     """
+    # Some convienence paramters
+    G = len(E_g) - 1
+    N = len(E_n) - 1
+    assert N == len(phi_n)
 
-    g_to_n_mask = np.array(E_g[g] <= E_n < E_g[g]  for g in range(len(E_g) - 1))
-    print 
+    index_E = np.arange(N+1)
 
-    #phi_g = 
+    # Setup masks
+    inner_mask_E = np.array([(E_g[g] <= E_n) & (E_n <= E_g[g+1]) for g in range(G)])
+    inner_mask_phi = inner_mask_E[:, :-1]
+
+    # si
+    print inner_mask_E.sum(axis=0)
+
+    phi_g = np.array([phi_n[inner_mask_phi[g]].sum() for g in range(G)])
+    print phi_g 
+
+    lower_index = np.array([index_E[inner_mask_E[g]][0] for g in range(G)])
+    upper_index = np.array([index_E[inner_mask_E[g]][-1] for g in range(G)])
+    print lower_index
+    print upper_index
 
 #def partial_group_collapse()
 

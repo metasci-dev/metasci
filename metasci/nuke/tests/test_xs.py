@@ -20,3 +20,19 @@ def test_xs_cache_E_n():
     assert_equal(id(from_cache), id(xs.xs_cache['E_n']))
 
     assert_array_equal(E_n, xs.xs_cache['E_n'])
+
+
+def test_phi_g():
+    # Set up energies
+    G = 10
+    E_g = np.logspace(-9, 1, G+1)
+    E_n = xs.xs_cache['E_n']
+
+    # setup flux
+    N = len(E_n) - 1
+    phi_n = np.ones(N)
+
+    # Calc new flux
+    phi_g = xs.phi_g(E_g, E_n, phi_n)
+
+    assert False
