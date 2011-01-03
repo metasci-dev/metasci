@@ -34,6 +34,56 @@ xs_cache = XSCache()
 ### Partial group collapse ###
 ##############################
 
+def partial_energy_matrix(E_n, E_g):
+    """Gerenates a matrix of fractional values that may be used to converts a high-resolution 
+    flux array with group structure E_n to a low-resolution flux array with group-structure E_g.
+
+    Args:
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * E_g (sequence of floats): lower resolution energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+
+    Returns:
+        * pem (array of fractions): This is a GxN sized matrix that when dotted with a 
+          high-resolution flux produces a low-resolution flux.
+    """
+    # Some convienence paramters
+    G = len(E_g) - 1
+    N = len(E_n) - 1
+
+    index_E_n = np.arange(N+1)
+
+    # Some assertions to ensure that everything is well formed
+    assert E_n[0] <= E_g[0]
+    assert E_g[-1] <= E_n[-1]
+
+    # Get the interior points for each gth group in n-space
+    inner_mask = np.array([(E_g[g] <= E_n) & (E_n <= E_g[g+1]) for g in range(G)])
+
+    # Get the upper and lower nth index for every gth group
+    lower_index = np.array([index_E_n[inner_mask[g]][0] for g in range(G)])
+    upper_index = np.array([index_E_n[inner_mask[g]][-1] for g in range(G)])
+
+    # Convert the mask to initialize the partial enery matrix
+    # Hack off the last index of the mask to make the right size
+    pem = np.array(inner_mask[:, :-1], dtype=float)
+
+    # Check for partial contibutions at the edges
+    for g in range(G):
+        # Lower bound
+        lig = lower_index[g]
+        if lig != 0:
+            pem[g][lig-1] = (E_n[lig] - E_g[g]) / (E_n[lig] - E_n[lig-1])
+
+        # Upper bound
+        uig = upper_index[g]
+        if uig < N:
+            pem[g][uig] = (E_g[g+1] - E_n[uig]) / (E_n[uig+1] - E_n[uig])
+
+    return pem
+
+
 def phi_g(E_g, E_n, phi_n):
     """Calculates the lower resolution flux, phi_g, from the lower resolution group stucture E_g, 
     the higher resolution groups E_n, and the higher resolution flux phi_n.
@@ -60,16 +110,52 @@ def phi_g(E_g, E_n, phi_n):
     inner_mask_E = np.array([(E_g[g] <= E_n) & (E_n <= E_g[g+1]) for g in range(G)])
     inner_mask_phi = inner_mask_E[:, :-1]
 
-    # si
-    print inner_mask_E.sum(axis=0)
-
-    phi_g = np.array([phi_n[inner_mask_phi[g]].sum() for g in range(G)])
-    print phi_g 
-
     lower_index = np.array([index_E[inner_mask_E[g]][0] for g in range(G)])
     upper_index = np.array([index_E[inner_mask_E[g]][-1] for g in range(G)])
     print lower_index
     print upper_index
+
+    mask_E = np.array(inner_mask_E, dtype=float)
+
+    # Check for partial contibutions at the edges
+    for g in range(G):
+        # Lower bound
+        lig = lower_index[g]
+        if lig != 0:
+#            print E_g[g], E_n[lig-1], E_n[lig]
+#            assert E_n[lig-1] <= E_g[g] <= E_n[lig]
+            mask_E[g][lig-1] = (E_n[lig] - E_g[g]) / (E_n[lig] - E_n[lig-1])
+
+        # Upper bound
+        uig = upper_index[g]
+        if uig < N:
+#            print E_g[g+1], E_n[uig], E_n[uig+1]
+#            assert E_n[uig] <= E_g[g+1] <= E_n[uig+1]
+            mask_E[g][uig] = (E_g[g+1] - E_n[uig]) / (E_n[uig+1] - E_n[uig])
+
+    print mask_E
+    print mask_E.sum(axis=0)
+
+    print E_n
+    print E_g
+
+    print (phi_n * mask_E[:, :-1]).sum(axis=1)
+    print np.dot(mask_E[:, :-1], phi_n)
+
+    # si
+    """print inner_mask_E.sum(axis=0)
+
+    phi_g = np.array([phi_n[inner_mask_phi[g]].sum() for g in range(G)])
+    print phi_g 
+
+
+    # Check for partial contibutions at the edges
+    for g in range(G):
+        lig = lower_index[g]
+        if lig == 0:
+            pass
+        phi_g[g] += phi_n[lig-1] * (E_n[lig] - E_[g])
+    """
 
 #def partial_group_collapse()
 

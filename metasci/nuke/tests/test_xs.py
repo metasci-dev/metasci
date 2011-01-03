@@ -22,7 +22,19 @@ def test_xs_cache_E_n():
     assert_array_equal(E_n, xs.xs_cache['E_n'])
 
 
-def test_phi_g():
+def test_partial_energy_matrix1():
+    E_g = np.array([1.25, 5.0, 7.5])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[0.5, 1.0, 0.0, 0.0], 
+                         [0.0, 0.0, 1.0, 0.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+"""def test_phi_g():
     # Set up energies
     G = 10
     E_g = np.logspace(-9, 1, G+1)
@@ -36,3 +48,4 @@ def test_phi_g():
     phi_g = xs.phi_g(E_g, E_n, phi_n)
 
     assert False
+"""
