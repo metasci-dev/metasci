@@ -64,9 +64,9 @@ class XSCache(dict):
             self['partial_energy_matrix'] = partial_energy_matrix(value, self['E_n'])
 
             # And remove any previous paramters dependent on E_g
-            for k in self:
-                if '_g' in k:
-                    del self[k]
+            dirty_keys = [k for k in self if '_g' in k]
+            for dk in dirty_keys:
+                del self[dk]
 
         # set the high resolution flux
         if (key == 'phi_n'):

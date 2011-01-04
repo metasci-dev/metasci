@@ -33,6 +33,32 @@ def test_xs_cache_sigma_f_n():
 
     assert_array_equal(sigma_f_n_U235, xs.xs_cache['sigma_f_n_922350'])
 
+
+def test_xs_cache_set_E_g():
+    # Add an energy stucture
+    xs.xs_cache['E_g'] = [1.0, 10.0]
+    E_g = xs.xs_cache['E_g']
+
+    # Assert that the cache is working
+    assert_equal(E_g.shape, (2, ))
+    assert_equal(id(E_g), id(xs.xs_cache['E_g']))
+
+    # Assert that the cache has been reloaded
+    xs.xs_cache['E_g'] = [1.0, 2.0, 10.0]
+    assert_not_equal(id(E_g), id(xs.xs_cache['E_g']))
+    assert_equal(len(E_g), 2)
+    assert_equal(len(xs.xs_cache['E_g']), 3)
+
+    # Assert that the partial energy matrix is calculated
+    assert_equal(len(xs.xs_cache['partial_energy_matrix']), 2)
+
+    # Assert that the reloading is done properly
+    xs.xs_cache['has_some_g'] = True
+    xs.xs_cache['E_g'] = [1.0, 2.0, 8.0, 10.0]
+    assert_equal(len(xs.xs_cache['partial_energy_matrix']), 3)
+    assert 'has_some_g' not in xs.xs_cache
+    
+
 #
 # Test Partial Energy Matrix
 #
