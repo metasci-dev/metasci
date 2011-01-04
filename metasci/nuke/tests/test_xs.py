@@ -59,6 +59,10 @@ def test_xs_cache_set_E_g():
     assert 'has_some_g' not in xs.xs_cache
     
 
+def test_xs_cache_phi_n():
+    xs.xs_cache['phi_n'] = [1.0, 10.0]
+    assert_array_equal(xs.xs_cache['phi_n'], np.array([1.0, 10.0]))
+
 #
 # Test Partial Energy Matrix
 #
