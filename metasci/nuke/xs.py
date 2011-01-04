@@ -40,8 +40,39 @@ class XSCache(dict):
                     # Return cross-section from file
                     self[key] = rows[0]
 
+        # Calculate the low-res flux as needed
+        if (key == 'phi_g') and ('phi_g' not in self):
+            self['phi_g'] = phi_g(self['E_g'], self['E_n'], self['phi_n'])
+
         # Return the value requestion
         return super(XSCache, self).__getitem__(key)
+
+
+    def __setitem__(self, key, value):
+        """Overwrites the dict's key lookup by prodiving some custom setting functionality.
+        """
+        # Set the E_g
+        if (key == 'E_g'):
+            value = np.array(value, dtype=float)
+
+            # If the E_gs are the same, don't set anything
+            if ('E_g' in self):
+                if (len(value) == len(self['E_g'])) and (value == self['E_g']).all():
+                    return 
+
+            # Otherwise, preload some stuff.
+            self['partial_energy_matrix'] = partial_energy_matrix(value, self['E_n'])
+
+            # And remove any previous paramters dependent on E_g
+            for k in self:
+                if '_g' in k:
+                    del self[k]
+
+        # set the high resolution flux
+        if (key == 'phi_n'):
+            value = np.array(value, dtype=float)
+
+        super(XSCache, self).__setitem__(key, value)
 
 xs_cache = XSCache()
 
@@ -140,7 +171,19 @@ def sigma_f(iso, E_g, phi_n):
     Returns:
         * sigma_f_g (numpy array): A numpy array of the collapsed fission cross-section.
     """
-    iso_zz = isoname.mixed_2_zzaaam(iso)
+    # Ensure that the low-fidelity group structure is in the cache
+    xs_cache['E_g'] = E_g
+    xs_cache['phi_n'] = phi_n
 
+    # Get the fission XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
     sigma_f_n = xs_cache['sigma_f_n_{0}'.format(iso_zz)]
 
+    # Get some other stuff from the cache
+    pem = xs_cache['partial_energy_matrix']
+
+    # Calculate the sigma_f_g cross section
+    sigma_f_g_unnormalized = np.dot(pem, sigma_f_n * xs_cache['phi_n'])
+    sigma_f_g = sigma_f_g_unnormalized / xs_cache['phi_g']
+
+    return sigma_f_g
