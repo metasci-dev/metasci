@@ -23,6 +23,29 @@ def test_xs_cache_E_n():
 
 
 def test_partial_energy_matrix1():
+    E_g = np.array([0.0, 10.0])
+    E_n = np.array([0.0, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[1.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+def test_partial_energy_matrix2():
+    E_g = np.array([0.0, 5.0, 10.0])
+    E_n = np.array([0.0, 5.0, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[1.0, 0.0], 
+                         [0.0, 1.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+def test_partial_energy_matrix3():
     E_g = np.array([1.25, 5.0, 7.5])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -30,6 +53,42 @@ def test_partial_energy_matrix1():
 
     expected = np.array([[0.5, 1.0, 0.0, 0.0], 
                          [0.0, 0.0, 1.0, 0.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+def test_partial_energy_matrix4():
+    E_g = np.array([0.0, 5.0, 10.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[1.0, 1.0, 0.0, 0.0], 
+                         [0.0, 0.0, 1.0, 1.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+def test_partial_energy_matrix5():
+    E_g = np.array([0.0, 4.0, 10.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[1.0, 0.6, 0.0, 0.0], 
+                         [0.0, 0.4, 1.0, 1.0]])
+
+    assert_array_equal(pem, expected)    
+
+
+def test_partial_energy_matrix6():
+    E_g = np.array([0.0, 4.0, 8.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    pem = xs.partial_energy_matrix(E_n, E_g)
+
+    expected = np.array([[1.0, 0.6, 0.0, 0.0], 
+                         [0.0, 0.4, 1.0, 0.2]])
 
     assert_array_equal(pem, expected)    
 
