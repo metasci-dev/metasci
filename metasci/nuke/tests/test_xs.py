@@ -179,3 +179,16 @@ def test_phi_g6():
     assert_array_almost_equal(phi_g, expected)    
 
 
+def test_phi_g7():
+    E_g = np.array([0.0, 4.0, 8.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    phi_n = np.array([0.0, 2.0, 1.0, 0.5])
+
+    phi_g = xs.phi_g(E_g, E_n, phi_n)
+
+    expected = np.array([1.2, 1.9])
+
+    # Floating point error here requires 'alomst' equal
+    assert_array_almost_equal(phi_g, expected)    
+
