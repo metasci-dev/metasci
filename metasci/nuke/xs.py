@@ -177,7 +177,37 @@ def phi_g(E_g, E_n, phi_n):
     return phi_g_array
 
 
-#def partial_group_collapse()
+def partial_group_collapse(E_g, E_n, phi_n, sigma_n):
+    """Calculates the group cross-sections for an isotope for a new, lower resolution
+    group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
+
+    Args:
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+        * sigma_n (sequence of floats): A high-fidelity cross-section.
+
+    Returns:
+        * sigma_g (numpy array): A numpy array of the collapsed fission cross-section.
+    """
+    # Load the appropriate values into the cache
+    xs_cache['E_n'] = E_n
+    xs_cache['E_g'] = E_g
+    xs_cache['phi_n'] = phi_n
+
+    # Get some other stuff from the cache
+    pem = xs_cache['partial_energy_matrix']
+
+    # Calulate partial group collapse
+    sigma_g_numer = np.dot(pem, sigma_n * xs_cache['phi_n'])
+    sigma_g_denom = xs_cache['phi_g']
+    sigma_g = sigma_g_numer / sigma_g_denom
+
+    return sigma_g
+
 
 ################################
 ### Cross-section generators ###

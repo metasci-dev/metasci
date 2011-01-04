@@ -102,6 +102,8 @@ def test_xs_cache_get_phi_g():
 #
 
 def test_partial_energy_matrix1():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 10.0])
     E_n = np.array([0.0, 10.0])
 
@@ -113,6 +115,8 @@ def test_partial_energy_matrix1():
 
 
 def test_partial_energy_matrix2():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 5.0, 10.0])
     E_n = np.array([0.0, 5.0, 10.0])
 
@@ -125,6 +129,8 @@ def test_partial_energy_matrix2():
 
 
 def test_partial_energy_matrix3():
+    xs.xs_cache.clear()
+
     E_g = np.array([1.25, 5.0, 7.5])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -137,6 +143,8 @@ def test_partial_energy_matrix3():
 
 
 def test_partial_energy_matrix4():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 5.0, 10.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -149,6 +157,8 @@ def test_partial_energy_matrix4():
 
 
 def test_partial_energy_matrix5():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 4.0, 10.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -161,6 +171,8 @@ def test_partial_energy_matrix5():
 
 
 def test_partial_energy_matrix6():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 4.0, 8.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -177,6 +189,8 @@ def test_partial_energy_matrix6():
 #
 
 def test_phi_g1():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 10.0])
     E_n = np.array([0.0, 10.0])
 
@@ -190,6 +204,8 @@ def test_phi_g1():
 
 
 def test_phi_g2():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 5.0, 10.0])
     E_n = np.array([0.0, 5.0, 10.0])
 
@@ -203,6 +219,8 @@ def test_phi_g2():
 
 
 def test_phi_g3():
+    xs.xs_cache.clear()
+
     E_g = np.array([1.25, 5.0, 7.5])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -216,6 +234,8 @@ def test_phi_g3():
 
 
 def test_phi_g4():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 5.0, 10.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -229,6 +249,8 @@ def test_phi_g4():
 
 
 def test_phi_g5():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 4.0, 10.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -242,6 +264,8 @@ def test_phi_g5():
 
 
 def test_phi_g6():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 4.0, 8.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -256,6 +280,8 @@ def test_phi_g6():
 
 
 def test_phi_g7():
+    xs.xs_cache.clear()
+
     E_g = np.array([0.0, 4.0, 8.0])
     E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
 
@@ -267,6 +293,75 @@ def test_phi_g7():
 
     # Floating point error here requires 'alomst' equal
     assert_array_almost_equal(phi_g, expected)    
+
+
+#
+# Partial Group Collapse Tests
+#
+
+def test_partial_group_collapse1():
+    xs.xs_cache.clear()
+
+    E_g = np.array([0.0, 4.0, 8.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    phi_n = np.ones(4)
+    sigma_n = np.ones(4)    
+
+    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+
+    expected = np.array([1.0, 1.0])
+
+    assert_array_equal(sigma_g, expected)
+
+
+def test_partial_group_collapse2():
+    xs.xs_cache.clear()
+
+    E_g = np.array([0.0, 5.0, 10.0])
+    E_n = np.array([0.0, 5.0, 10.0])
+
+    phi_n = np.array([2.0, 1.0])
+    sigma_n = np.ones(2)    
+
+    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+
+    expected = np.array([1.0, 1.0])
+
+    assert_array_equal(sigma_g, expected)
+
+
+def test_partial_group_collapse3():
+    xs.xs_cache.clear()
+
+    E_g = np.array([0.0, 4.0, 8.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    phi_n = np.array([2.0, 1.0, 1.0, 1.0])
+    sigma_n = np.ones(4)    
+
+    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+
+    expected = np.array([1.0, 1.0])
+
+    assert_array_equal(sigma_g, expected)
+
+
+def test_partial_group_collapse4():
+    xs.xs_cache.clear()
+
+    E_g = np.array([0.0, 4.0, 8.0])
+    E_n = np.array([0.0, 2.5, 5.0, 7.5, 10.0])
+
+    phi_n = np.array([2.0, 1.0, 1.0, 1.0])
+    sigma_n = np.array([2.0, 1.0, 1.0, 1.0])    
+
+    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+
+    expected = np.array([4.6/2.6, 1.0])
+
+    assert_array_equal(sigma_g, expected)
+
 
 #
 # Fission XS Test
