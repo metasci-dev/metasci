@@ -177,26 +177,35 @@ def phi_g(E_g, E_n, phi_n):
     return phi_g_array
 
 
-def partial_group_collapse(E_g, E_n, phi_n, sigma_n):
+def partial_group_collapse(sigma_n, E_g=None, E_n=None, phi_n=None):
     """Calculates the group cross-sections for an isotope for a new, lower resolution
     group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
 
     Args:
+        * sigma_n (sequence of floats): A high-fidelity cross-section.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
         * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
           that is of length G+1. Ordered from lowest-to-highest energy.
         * E_n (sequence of floats): higher resolution energy group structure [MeV]
           that is of length N+1. Ordered from lowest-to-highest energy.
         * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
           cross-section over.  Length N.  Ordered from lowest-to-highest energy.
-        * sigma_n (sequence of floats): A high-fidelity cross-section.
 
     Returns:
         * sigma_g (numpy array): A numpy array of the collapsed fission cross-section.
     """
     # Load the appropriate values into the cache
-    xs_cache['E_n'] = E_n
-    xs_cache['E_g'] = E_g
-    xs_cache['phi_n'] = phi_n
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
 
     # Get some other stuff from the cache
     pem = xs_cache['partial_energy_matrix']

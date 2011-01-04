@@ -308,7 +308,7 @@ def test_partial_group_collapse1():
     phi_n = np.ones(4)
     sigma_n = np.ones(4)    
 
-    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+    sigma_g = xs.partial_group_collapse(sigma_n, E_g, E_n, phi_n)
 
     expected = np.array([1.0, 1.0])
 
@@ -324,7 +324,7 @@ def test_partial_group_collapse2():
     phi_n = np.array([2.0, 1.0])
     sigma_n = np.ones(2)    
 
-    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+    sigma_g = xs.partial_group_collapse(sigma_n, E_g, E_n, phi_n)
 
     expected = np.array([1.0, 1.0])
 
@@ -340,7 +340,7 @@ def test_partial_group_collapse3():
     phi_n = np.array([2.0, 1.0, 1.0, 1.0])
     sigma_n = np.ones(4)    
 
-    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+    sigma_g = xs.partial_group_collapse(sigma_n, E_g, E_n, phi_n)
 
     expected = np.array([1.0, 1.0])
 
@@ -356,7 +356,7 @@ def test_partial_group_collapse4():
     phi_n = np.array([2.0, 1.0, 1.0, 1.0])
     sigma_n = np.array([2.0, 1.0, 1.0, 1.0])    
 
-    sigma_g = xs.partial_group_collapse(E_g, E_n, phi_n, sigma_n)
+    sigma_g = xs.partial_group_collapse(sigma_n, E_g, E_n, phi_n)
 
     expected = np.array([4.6/2.6, 1.0])
 
