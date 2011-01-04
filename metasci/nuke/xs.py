@@ -34,7 +34,7 @@ xs_cache = XSCache()
 ### Partial group collapse ###
 ##############################
 
-def partial_energy_matrix(E_n, E_g):
+def partial_energy_matrix(E_g, E_n):
     """Gerenates a matrix of fractional values that may be used to converts a high-resolution 
     flux array with group structure E_n to a low-resolution flux array with group-structure E_g.
 
