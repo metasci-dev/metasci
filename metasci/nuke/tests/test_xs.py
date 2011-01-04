@@ -12,6 +12,8 @@ from metasci.nuke import nuc_data
 
 
 def test_xs_cache_E_n():
+    xs.xs_cache.clear()
+
     with tb.openFile(nuc_data, 'r') as f:
         E_n = np.array(f.root.neutron.xs_mg.E_g)
 
@@ -23,6 +25,8 @@ def test_xs_cache_E_n():
 
 
 def test_xs_cache_sigma_f_n():
+    xs.xs_cache.clear()
+
     with tb.openFile(nuc_data, 'r') as f:
         sigma_f_n_U235 = np.array(f.root.neutron.xs_mg.fission[28]['xs'])
 
@@ -35,6 +39,8 @@ def test_xs_cache_sigma_f_n():
 
 
 def test_xs_cache_set_E_g():
+    xs.xs_cache.clear()
+
     # Add an energy stucture
     xs.xs_cache['E_g'] = [1.0, 10.0]
     E_g = xs.xs_cache['E_g']
@@ -59,12 +65,27 @@ def test_xs_cache_set_E_g():
     assert 'has_some_g' not in xs.xs_cache
     
 
-def test_xs_cache_phi_n():
+def test_xs_cache_set_phi_n():
+    xs.xs_cache.clear()
+
+    xs.xs_cache['E_n'] = np.array([0.0, 5.0, 10.0])
+    xs.xs_cache['E_g'] = np.array([0.0, 5.0, 10.0])
     xs.xs_cache['phi_n'] = [1.0, 10.0]
     assert_array_equal(xs.xs_cache['phi_n'], np.array([1.0, 10.0]))
 
+    # Test that resetting the flux cleans the cache properly
+    phi_g = xs.xs_cache['phi_g']
+    assert 'phi_g' in xs.xs_cache
 
-def test_xs_cache_phi_g():
+    xs.xs_cache['phi_n'] = [1.0, 5.0]
+
+    assert 'E_g' in xs.xs_cache
+    assert 'phi_g' not in xs.xs_cache
+
+
+def test_xs_cache_get_phi_g():
+    xs.xs_cache.clear()
+
     xs.xs_cache['E_n'] = np.array([0.0, 5.0, 10.0])
     xs.xs_cache['E_g'] = np.array([0.0, 5.0, 10.0])
 

@@ -68,10 +68,36 @@ class XSCache(dict):
             for dk in dirty_keys:
                 del self[dk]
 
-        # set the high resolution flux
-        if key in ('phi_n', 'E_n'):
+
+        # Set the E_n
+        if (key == 'E_n'):
+            value = np.array(value, dtype=float)
+            
+            # If the E_gs are the same, don't set anything
+            if ('E_n' in self):
+                if (len(value) == len(self['E_n'])) and (value == self['E_n']).all():
+                    return 
+
+            # Otherwise, preload some stuff.
+            if 'E_g' in self:
+                self['partial_energy_matrix'] = partial_energy_matrix(self['E_g'], value)
+
+
+        # Set the high resolution flux, phi_n
+        if key == 'phi_n':
             value = np.array(value, dtype=float)
 
+            # If the flux is same, don't set or remove anything
+            if ('phi_n' in self):
+                if (len(value) == len(self['phi_n'])) and (value == self['phi_n']).all():
+                    return 
+
+            # And remove any previous paramters dependent on phi_n
+            dirty_keys = [k for k in self if ('_g' in k and k != 'E_g')]
+            for dk in dirty_keys:
+                del self[dk]
+
+        # Set the value normally
         super(XSCache, self).__setitem__(key, value)
 
 xs_cache = XSCache()
