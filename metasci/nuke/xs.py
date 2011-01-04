@@ -1,5 +1,6 @@
 """This module provides functionality to automatically extract cross-sections
 from the nulear database."""
+import re
 
 import numpy as np
 import tables as tb
@@ -23,6 +24,21 @@ class XSCache(dict):
         if (key == 'E_n') and ('E_n' not in self):
             with tb.openFile(nuc_data, 'r') as f:
                 self['E_n'] = np.array(f.root.neutron.xs_mg.E_g)
+
+        # Grab fission cross-sections from the file
+        m = re.match('sigma_f_n_(\d+)', key)
+        if (m is not None) and (key not in self):
+            iso = m.group(1)
+            with tb.openFile(nuc_data, 'r') as f:
+                rows = [np.array(row['xs']) for row in  
+                        f.root.neutron.xs_mg.fission.where('iso_zz == {0}'.format(iso))]
+
+                if len(rows) == 0:
+                    # Not fissionable, return zero-array
+                    self[key] = np.zeros(len(self['E_n']) - 1, dtype=float)
+                elif len(rows) == 1:
+                    # Return cross-section from file
+                    self[key] = rows[0]
 
         # Return the value requestion
         return super(XSCache, self).__getitem__(key)
@@ -124,4 +140,7 @@ def sigma_f(iso, E_g, phi_n):
     Returns:
         * sigma_f_g (numpy array): A numpy array of the collapsed fission cross-section.
     """
-    pass
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+
+    sigma_f_n = xs_cache['sigma_f_n_{0}'.format(iso_zz)]
+

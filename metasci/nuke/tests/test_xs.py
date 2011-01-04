@@ -21,6 +21,18 @@ def test_xs_cache_E_n():
 
     assert_array_equal(E_n, xs.xs_cache['E_n'])
 
+
+def test_xs_cache_sigma_f_n():
+    with tb.openFile(nuc_data, 'r') as f:
+        sigma_f_n_U235 = np.array(f.root.neutron.xs_mg.fission[28]['xs'])
+
+    from_cache = xs.xs_cache['sigma_f_n_922350']
+
+    assert_not_equal(id(sigma_f_n_U235), id(from_cache))
+    assert_equal(id(from_cache), id(xs.xs_cache['sigma_f_n_922350']))
+
+    assert_array_equal(sigma_f_n_U235, xs.xs_cache['sigma_f_n_922350'])
+
 #
 # Test Partial Energy Matrix
 #
