@@ -99,63 +99,10 @@ def phi_g(E_g, E_n, phi_n):
     Returns: 
         * phi_g_array (numpy array of floats): The flux collapsed to G energy groups.
     """
-    # Some convienence paramters
-    G = len(E_g) - 1
-    N = len(E_n) - 1
-    assert N == len(phi_n)
+    pem = partial_energy_matrix(E_g, E_n)
+    phi_g_array = np.dot(pem, phi_n)
+    return phi_g_array
 
-    index_E = np.arange(N+1)
-
-    # Setup masks
-    inner_mask_E = np.array([(E_g[g] <= E_n) & (E_n <= E_g[g+1]) for g in range(G)])
-    inner_mask_phi = inner_mask_E[:, :-1]
-
-    lower_index = np.array([index_E[inner_mask_E[g]][0] for g in range(G)])
-    upper_index = np.array([index_E[inner_mask_E[g]][-1] for g in range(G)])
-    print lower_index
-    print upper_index
-
-    mask_E = np.array(inner_mask_E, dtype=float)
-
-    # Check for partial contibutions at the edges
-    for g in range(G):
-        # Lower bound
-        lig = lower_index[g]
-        if lig != 0:
-#            print E_g[g], E_n[lig-1], E_n[lig]
-#            assert E_n[lig-1] <= E_g[g] <= E_n[lig]
-            mask_E[g][lig-1] = (E_n[lig] - E_g[g]) / (E_n[lig] - E_n[lig-1])
-
-        # Upper bound
-        uig = upper_index[g]
-        if uig < N:
-#            print E_g[g+1], E_n[uig], E_n[uig+1]
-#            assert E_n[uig] <= E_g[g+1] <= E_n[uig+1]
-            mask_E[g][uig] = (E_g[g+1] - E_n[uig]) / (E_n[uig+1] - E_n[uig])
-
-    print mask_E
-    print mask_E.sum(axis=0)
-
-    print E_n
-    print E_g
-
-    print (phi_n * mask_E[:, :-1]).sum(axis=1)
-    print np.dot(mask_E[:, :-1], phi_n)
-
-    # si
-    """print inner_mask_E.sum(axis=0)
-
-    phi_g = np.array([phi_n[inner_mask_phi[g]].sum() for g in range(G)])
-    print phi_g 
-
-
-    # Check for partial contibutions at the edges
-    for g in range(G):
-        lig = lower_index[g]
-        if lig == 0:
-            pass
-        phi_g[g] += phi_n[lig-1] * (E_n[lig] - E_[g])
-    """
 
 #def partial_group_collapse()
 
