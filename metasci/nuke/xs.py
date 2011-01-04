@@ -69,7 +69,7 @@ class XSCache(dict):
                 del self[dk]
 
         # set the high resolution flux
-        if (key == 'phi_n'):
+        if key in ('phi_n', 'E_n'):
             value = np.array(value, dtype=float)
 
         super(XSCache, self).__setitem__(key, value)
