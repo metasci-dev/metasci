@@ -12,7 +12,7 @@ from . import nuc_data
 ###############################################################################
 ### Set up a cross-section cache so the same data isn't loaded repetitively ###
 ###############################################################################
-    
+
 class XSCache(dict):
     """A lightweight cross-section cache based off of python dictionaries."""
 
@@ -28,17 +28,8 @@ class XSCache(dict):
         # Grab fission cross-sections from the file
         m = re.match('sigma_f_n_(\d+)', key)
         if (m is not None) and (key not in self):
-            iso = m.group(1)
-            with tb.openFile(nuc_data, 'r') as f:
-                rows = [np.array(row['xs']) for row in  
-                        f.root.neutron.xs_mg.fission.where('iso_zz == {0}'.format(iso))]
-
-                if len(rows) == 0:
-                    # Not fissionable, return zero-array
-                    self[key] = np.zeros(len(self['E_n']) - 1, dtype=float)
-                elif len(rows) == 1:
-                    # Return cross-section from file
-                    self[key] = rows[0]
+            iso = int(m.group(1))
+            self[key] = get_sigma_f_n(iso)
 
         # Calculate the low-res flux as needed
         if (key == 'phi_g') and ('phi_g' not in self):
@@ -102,6 +93,33 @@ class XSCache(dict):
 
 xs_cache = XSCache()
 
+
+def get_sigma_f_n(iso):
+    """Grabs an isotope's fission cross-section from the nuc_data library.
+
+    Args:
+        * iso (zzaaam): Isotope name, in appropriate form.
+
+    Returns:
+        * sigma_f_n (numpy array): This isotope's fission cross-section pulled from the
+          database library file.  If not present in the library, a zero-array is returned.
+    """
+    with tb.openFile(nuc_data, 'r') as f:
+        N = f.root.neutron.xs_mg.fission.coldescrs['xs'].shape[0]
+        rows = [np.array(row['xs']) for row in f.root.neutron.xs_mg.fission.where('iso_zz == {0}'.format(iso))]
+
+    if len(rows) == 0:
+        # Not fissionable, return zero-array
+        sigma_f_n = np.zeros(N, dtype=float)
+    elif len(rows) == 1:
+        # Return cross-section from file
+        sigma_f_n = rows[0]
+    else:
+        iso_LL = isoname.zzaaam_2_LLAAAM(iso)
+        err_str = "The database contains multiple entries for the fission cross-section for {0}!".format(iso_LL)
+        raise ValueError(err_str)
+
+    return sigma_f_n
 
 ##############################
 ### Partial group collapse ###
