@@ -121,6 +121,32 @@ def get_sigma_f_n(iso):
 
     return sigma_f_n
 
+
+def get_sigma_a_n(iso):
+    """Grabs an isotope's absorption cross-section from the nuc_data library.
+
+    Args:
+        * iso (zzaaam): Isotope name, in appropriate form.
+
+    Returns:
+        * sigma_f_n (numpy array): This isotope's absorption cross-section pulled from the
+          database library file.  If not present in the library, a zero-array is returned.
+    """
+    with tb.openFile(nuc_data, 'r') as f:
+        N = f.root.neutron.xs_mg.absorption.coldescrs['xs'].shape[0]
+        rows = [np.array(row['xs']) for row in 
+                f.root.neutron.xs_mg.absorption.where("(from_iso_zz == {0}) & (reaction_type != 'c')".format(iso))]
+
+    if len(rows) == 0:
+        # No absportion, return zero-array
+        sigma_a_n = np.zeros(N, dtype=float)
+    else:
+        rows = np.array(rows)
+        sigma_a_n = rows.sum(axis=0)
+
+    return sigma_a_n
+
+
 ##############################
 ### Partial group collapse ###
 ##############################
