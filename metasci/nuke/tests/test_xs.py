@@ -367,4 +367,48 @@ def test_partial_group_collapse4():
 # Fission XS Test
 #
 
-#def 
+def test_sigma_f1():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = [10.0, 20.0]
+    phi_n = np.ones(N)
+
+    sigma_f_g = xs.sigma_f(922350, E_g=E_g, phi_n=phi_n)
+
+    expected = np.array([(2.0617 + 2.1007 + 1.9677)/3.0])
+
+    assert_array_equal(sigma_f_g, expected)
+
+
+def test_sigma_f2():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = [10.0, 20.0]
+    phi_n = np.ones(N)
+    phi_n[59] = 2.0
+
+    sigma_f_g = xs.sigma_f(922350, E_g=E_g, phi_n=phi_n)
+
+    expected = np.array([(2.0617*2.0 + 2.1007 + 1.9677)/4.0])
+
+    assert_array_equal(sigma_f_g, expected)
+
+
+def test_sigma_f3():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = np.copy(xs.xs_cache['E_n'])
+    phi_n = np.ones(N)
+
+    sigma_f_g = xs.sigma_f("H1", E_g=E_g, phi_n=phi_n)
+
+    expected = np.zeros(N)
+
+    assert_array_equal(sigma_f_g, expected)
+

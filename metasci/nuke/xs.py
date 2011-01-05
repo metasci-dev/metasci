@@ -222,14 +222,22 @@ def partial_group_collapse(sigma_n, E_g=None, E_n=None, phi_n=None):
 ### Cross-section generators ###
 ################################
 
-def sigma_f(iso, E_g, phi_n):
+def sigma_f(iso, E_g=None, E_n=None, phi_n=None):
     """Calculates the neutron fission cross-section for an isotope for a new, lower resolution
     group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
 
+    Note: This always pulls the fission cross-section out of the nuc_data library.    
+
     Args:
         * iso (int or str): An isotope to calculate the fission cross-section for.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
         * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
           that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
         * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
           cross-section over.  Length N.  Ordered from lowest-to-highest energy.
 
@@ -237,18 +245,30 @@ def sigma_f(iso, E_g, phi_n):
         * sigma_f_g (numpy array): A numpy array of the collapsed fission cross-section.
     """
     # Ensure that the low-fidelity group structure is in the cache
-    xs_cache['E_g'] = E_g
-    xs_cache['phi_n'] = phi_n
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
 
     # Get the fission XS
     iso_zz = isoname.mixed_2_zzaaam(iso)
-    sigma_f_n = xs_cache['sigma_f_n_{0}'.format(iso_zz)]
+    sigma_f_n_iso_zz = 'sigma_f_n_{0}'.format(iso_zz)
+    sigma_f_g_iso_zz = 'sigma_f_g_{0}'.format(iso_zz)
 
-    # Get some other stuff from the cache
-    pem = xs_cache['partial_energy_matrix']
+    # Don't recalculate anything if you don't have to
+    if sigma_f_g_iso_zz in xs_cache:
+        return xs_cache[sigma_f_g_iso_zz]
+    else:
+        sigma_f_n = xs_cache[sigma_f_n_iso_zz]
 
-    # Calculate the sigma_f_g cross section
-    sigma_f_g_unnormalized = np.dot(pem, sigma_f_n * xs_cache['phi_n'])
-    sigma_f_g = sigma_f_g_unnormalized / xs_cache['phi_g']
+    # Perform the group collapse, knowing that the right data is in the cache
+    sigma_f_g = partial_group_collapse(sigma_f_n)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_f_g_iso_zz] = sigma_f_g
 
     return sigma_f_g
