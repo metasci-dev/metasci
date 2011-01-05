@@ -38,6 +38,20 @@ def test_xs_cache_sigma_f_n():
     assert_array_equal(sigma_f_n_U235, xs.xs_cache['sigma_f_n_922350'])
 
 
+def test_xs_cache_sigma_a_n():
+    xs.xs_cache.clear()
+
+    with tb.openFile(nuc_data, 'r') as f:
+        sigma_a_n_H1 = np.array(f.root.neutron.xs_mg.absorption[0]['xs'])
+
+    from_cache = xs.xs_cache['sigma_a_n_10010']
+
+    assert_not_equal(id(sigma_a_n_H1), id(from_cache))
+    assert_equal(id(from_cache), id(xs.xs_cache['sigma_a_n_10010']))
+
+    assert_array_equal(sigma_a_n_H1, xs.xs_cache['sigma_a_n_10010'])
+
+
 def test_xs_cache_set_E_g():
     xs.xs_cache.clear()
 

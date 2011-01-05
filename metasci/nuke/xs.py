@@ -31,6 +31,12 @@ class XSCache(dict):
             iso = int(m.group(1))
             self[key] = get_sigma_f_n(iso)
 
+        # Grab absorption cross-sections from the file
+        m = re.match('sigma_a_n_(\d+)', key)
+        if (m is not None) and (key not in self):
+            iso = int(m.group(1))
+            self[key] = get_sigma_a_n(iso)
+
         # Calculate the low-res flux as needed
         if (key == 'phi_g') and ('phi_g' not in self):
             self['phi_g'] = phi_g(self['E_g'], self['E_n'], self['phi_n'])
@@ -129,7 +135,7 @@ def get_sigma_a_n(iso):
         * iso (zzaaam): Isotope name, in appropriate form.
 
     Returns:
-        * sigma_f_n (numpy array): This isotope's absorption cross-section pulled from the
+        * sigma_a_n (numpy array): This isotope's absorption cross-section pulled from the
           database library file.  If not present in the library, a zero-array is returned.
     """
     with tb.openFile(nuc_data, 'r') as f:
