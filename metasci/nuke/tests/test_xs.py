@@ -615,3 +615,49 @@ def test_sigma_f3():
 
     assert_array_equal(sigma_f_g, expected)
 
+
+def test_sigma_a1():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = [10.0, 20.0]
+    phi_n = np.ones(N)
+
+    sigma_a_g = xs.sigma_a(922350, E_g=E_g, phi_n=phi_n)
+
+    expected = np.array([(2.80979167 + 2.7657667 + 2.46220866)/3.0])
+
+    assert_array_almost_equal(sigma_a_g, expected)
+
+
+def test_sigma_a2():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = [10.0, 20.0]
+    phi_n = np.ones(N)
+    phi_n[59] = 2.0
+
+    sigma_a_g = xs.sigma_a(922350, E_g=E_g, phi_n=phi_n)
+
+    expected = np.array([(2.80979167*2.0 + 2.7657667 + 2.46220866)/4.0])
+
+    assert_array_almost_equal(sigma_a_g, expected)
+
+
+def test_sigma_a3():
+    xs.xs_cache.clear()
+
+    N = len(xs.xs_cache['E_n']) - 1
+
+    E_g = [10.0, 20.0]
+    phi_n = np.ones(N)
+
+    sigma_a_g = xs.sigma_a("H1", E_g=E_g, phi_n=phi_n)
+
+    expected = np.array([(2.97130000e-05 + 2.89150000e-05 + 2.67690000e-05)/3.0])
+
+    assert_array_almost_equal(sigma_a_g, expected)
+

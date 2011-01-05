@@ -150,6 +150,10 @@ def get_sigma_a_n(iso):
         rows = np.array(rows)
         sigma_a_n = rows.sum(axis=0)
 
+    # Add in the fission cross-section
+    sigma_f_n = get_sigma_f_n(iso)
+    sigma_a_n += sigma_f_n
+
     return sigma_a_n
 
 
@@ -322,3 +326,55 @@ def sigma_f(iso, E_g=None, E_n=None, phi_n=None):
     xs_cache[sigma_f_g_iso_zz] = sigma_f_g
 
     return sigma_f_g
+
+
+def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
+    """Calculates the neutron absorption cross-section for an isotope for a new, lower resolution
+    group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
+
+    Note: This always pulls the absorption cross-section out of the nuc_data library.    
+
+    Args:
+        * iso (int or str): An isotope to calculate the absorption cross-section for.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * sigma_a_g (numpy array): A numpy array of the collapsed absorption cross-section.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the fission XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    sigma_a_n_iso_zz = 'sigma_a_n_{0}'.format(iso_zz)
+    sigma_a_g_iso_zz = 'sigma_a_g_{0}'.format(iso_zz)
+
+    # Don't recalculate anything if you don't have to
+    if sigma_a_g_iso_zz in xs_cache:
+        return xs_cache[sigma_a_g_iso_zz]
+    else:
+        sigma_a_n = xs_cache[sigma_a_n_iso_zz]
+
+    # Perform the group collapse, knowing that the right data is in the cache
+    sigma_a_g = partial_group_collapse(sigma_a_n)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_a_g_iso_zz] = sigma_a_g
+
+    return sigma_a_g
