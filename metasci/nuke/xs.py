@@ -4,10 +4,18 @@ import re
 
 import numpy as np
 import tables as tb
+from scipy import integrate
+from scipy import constants
 
 import isoname
 
 from . import nuc_data
+
+# Bolzman's constant in MeV/K
+k = constants.physical_constants['Boltzmann constant in eV/K'] * (10**-6)
+
+# Neutron mass in amu
+m_n = constants.physical_constants['neutron mass in u']
 
 ###############################################################################
 ### Set up a cross-section cache so the same data isn't loaded repetitively ###
@@ -378,3 +386,18 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     xs_cache[sigma_a_g_iso_zz] = sigma_a_g
 
     return sigma_a_g
+
+
+def ddif(theta, E_prime, E=1.0, b=1.0, T=300.0, M_A=1.0):
+    kT = k * T
+
+    alpha = (E_prime + E - 2 * np.sqrt(E_prime*E) * np.cos(theta)) / (kT * M_A / m_n)
+    beta = (E_prime - E) / kT
+
+    power_term = (beta/2.0) + (alpha/4.0) + (beta**2 / (4.0 * alpha))
+
+    return (1.0 - 2.0 * E / (931.46 * m_n)) * (b**2 / kT) * np.sqrt((np.pi * E_prime) / (alpha * E)) * np.exp(-power_term)
+    
+
+def sigma_e(E, M_A=1.0):
+    E_prime_min = (M_A - m_n) * E / (M_A + m_n)
