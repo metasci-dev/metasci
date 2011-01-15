@@ -553,7 +553,7 @@ def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
     alpha_lower = alpha_given_theta_0(E_prime, E, M_A, T)
     alpha_upper = alpha_given_theta_pi(E_prime, E, M_A, T)
     _beta = beta(E_prime, E, T)
-    abs_beta = np.abs(beta)
+    abs_beta = np.abs(_beta)
 
     Q = erf((abs_beta - alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
         erf((abs_beta - alpha_upper) / (2.0 * np.sqrt(alpha_upper))) + \
