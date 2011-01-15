@@ -12,10 +12,10 @@ import isoname
 from . import nuc_data
 
 # Bolzman's constant in MeV/K
-k = constants.physical_constants['Boltzmann constant in eV/K'] * (10**-6)
+k = constants.physical_constants['Boltzmann constant in eV/K'][0] * (10**-6)
 
 # Neutron mass in amu
-m_n = constants.physical_constants['neutron mass in u']
+m_n = constants.physical_constants['neutron mass in u'][0]
 
 ###############################################################################
 ### Set up a cross-section cache so the same data isn't loaded repetitively ###
@@ -388,7 +388,7 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     return sigma_a_g
 
 
-def alpha(E_prime, E, theta, M_A=1.0 T=300.0):
+def alpha(E_prime, E, theta, M_A=1.0, T=300.0):
     """Scattering kernel alpha value.
 
     .. math::
@@ -430,7 +430,7 @@ def beta(E_prime, E, T=300.0):
     return b
 
 
-def alpha_given_theta_0(E_prime, E, M_A=1.0 T=300.0):
+def alpha_given_theta_0(E_prime, E, M_A=1.0, T=300.0):
     """Scattering kernel alpha value at the lower bound of the scattering angle.
 
     .. math::
@@ -451,7 +451,7 @@ def alpha_given_theta_0(E_prime, E, M_A=1.0 T=300.0):
     return a
 
 
-def alpha_given_theta_pi(E_prime, E, M_A=1.0 T=300.0):
+def alpha_given_theta_pi(E_prime, E, M_A=1.0, T=300.0):
     """Scattering kernel alpha value at the upper bound of the scattering angle.
 
     .. math::

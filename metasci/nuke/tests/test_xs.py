@@ -3,7 +3,7 @@ import os
 import numpy as np
 import tables as tb
 
-from nose.tools import assert_equal, assert_not_equal
+from nose.tools import assert_equal, assert_not_equal, assert_almost_equal
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from metasci.nuke import xs
@@ -661,3 +661,61 @@ def test_sigma_a3():
 
     assert_array_almost_equal(sigma_a_g, expected)
 
+
+#
+# Scattering XS Test
+#
+
+
+def test_alpha():
+    assert_equal(1.0 / xs.k, xs.alpha(0.0, 1.0, 0.0, xs.m_n, 1.0))
+
+    assert_almost_equal(1.0, (1.0 / (12.0*xs.k)) / xs.alpha(0.0, 1.0, 0.0, 12*xs.m_n, 1.0))
+
+    assert_almost_equal(1.0, (1.5 / (12.0*xs.k)) / xs.alpha(0.5, 1.0, np.pi/2, 12*xs.m_n, 1.0))
+
+    assert_almost_equal(1.0, (1.5 / (12.0*xs.k*2.0)) / xs.alpha(0.5, 1.0, np.pi/2, 12*xs.m_n, 2.0))
+
+    assert_almost_equal(1.0, ((1.5 - 2*np.sqrt(0.5)*np.cos(np.pi/4)) / (12.0*xs.k*2.0)) / xs.alpha(0.5, 1.0, np.pi/4, 12*xs.m_n, 2.0))
+
+
+def test_beta():
+    assert_equal((1.0 / (xs.k)), xs.beta(2.0, 1.0, 1.0))
+
+    assert_equal((2.0 / (xs.k)), xs.beta(3.0, 1.0, 1.0))
+
+    assert_equal((2.0 / (2.0 * xs.k)), xs.beta(3.0, 1.0, 2.0))
+
+    assert_equal((-1.0 / (2.0 * xs.k)), xs.beta(0.0, 1.0, 2.0))
+
+
+def test_alpha_given_theta_0():
+    E_prime = np.linspace(0.5, 1.5, 101)
+    E = np.linspace(0.75, 1.25, 101)
+
+    M_A = np.linspace(1, 300, 101)
+    T = np.linspace(1, 1800, 101)
+    
+    assert_array_almost_equal(xs.alpha_given_theta_0(E_prime, 1.0, 12*xs.m_n, 2.0),  xs.alpha(E_prime, 1.0, 0.0, 12*xs.m_n, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_0(E_prime, E, 12*xs.m_n, 2.0),  xs.alpha(E_prime, E, 0.0, 12*xs.m_n, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_0(E_prime, E, M_A, 2.0),  xs.alpha(E_prime, E, 0.0, M_A, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_0(E_prime, E, M_A, T),  xs.alpha(E_prime, E, 0.0, M_A, T))
+
+
+def test_alpha_given_theta_pi():
+    E_prime = np.linspace(0.5, 1.5, 101)
+    E = np.linspace(0.75, 1.25, 101)
+
+    M_A = np.linspace(1, 300, 101)
+    T = np.linspace(1, 1800, 101)
+    
+    assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, 1.0, 12*xs.m_n, 2.0),  xs.alpha(E_prime, 1.0, np.pi, 12*xs.m_n, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, E, 12*xs.m_n, 2.0),  xs.alpha(E_prime, E, np.pi, 12*xs.m_n, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, E, M_A, 2.0),  xs.alpha(E_prime, E, np.pi, M_A, 2.0))
+
+    assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, E, M_A, T),  xs.alpha(E_prime, E, np.pi, M_A, T))
