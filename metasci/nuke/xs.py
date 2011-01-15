@@ -388,13 +388,16 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
 
     return sigma_a_g
 
+#
+# Scattering cross section
+#
 
 def alpha(E_prime, E, theta, M_A=1.0, T=300.0):
     """Scattering kernel alpha value.
 
     .. math::
 
-        \alpha = \frac{E^\prime + E - 2\sqrt{E^\prime E}\cos\theta}{\frac{M_A}{m_n}kT}
+        \\alpha = \\frac{E^\prime + E - 2\sqrt{E^\prime E}\cos\\theta}{\\frac{M_A}{m_n}kT}
 
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
@@ -416,7 +419,7 @@ def beta(E_prime, E, T=300.0):
 
     .. math::
 
-        \beta = \frac{E^\prime - E}{kT}
+        \\beta = \\frac{E^\prime - E}{kT}
 
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
@@ -436,7 +439,7 @@ def alpha_given_theta_0(E_prime, E, M_A=1.0, T=300.0):
 
     .. math::
 
-        \alpha_{\theta=0} = \frac{E^\prime + E - 2\sqrt{E^\prime E}}{\frac{M_A}{m_n}kT}
+        \\alpha_{\\theta=0} = \\frac{E^\prime + E - 2\sqrt{E^\prime E}}{\\frac{M_A}{m_n}kT}
 
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
@@ -457,7 +460,7 @@ def alpha_given_theta_pi(E_prime, E, M_A=1.0, T=300.0):
 
     .. math::
 
-        \alpha_{\theta=\pi} = \frac{E^\prime + E + 2\sqrt{E^\prime E}}{\frac{M_A}{m_n}kT}
+        \\alpha_{\\theta=\pi} = \\frac{E^\prime + E + 2\sqrt{E^\prime E}}{\\frac{M_A}{m_n}kT}
 
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
@@ -478,7 +481,7 @@ def one_over_gamma_squared(E):
 
     .. math::
 
-        \frac{1}{\gamma^2} = \left( 1 - \frac{2E}{931.46 m_n} \right)
+        \\frac{1}{\gamma^2} = \left( 1 - \\frac{2E}{931.46 \\cdot m_n} \\right)
 
     Args:
         * E (float): The incident energy of the neutron prior to the 
@@ -491,9 +494,9 @@ def one_over_gamma_squared(E):
 def d2sigma_s_dE_prime_dOmega(E_prime, E, theta, b=1.0, M_A=1.0, T=300.0):
     """Computes the double differential total scattering cross section from the equation
 
-    d2 sigma_s(E) 
-    ------------- =  [1]
-     dE' dOmega
+    .. math::
+
+        \\frac{d\sigma_s(E)}{dE^\prime} = \mbox{[1]}
 
     FIXME: I am untested
 
@@ -533,8 +536,13 @@ def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
 
     .. math::
 
-        \frac{d\sigma_s(E)}{dE^\prime} = b^2 \left( 1 - \frac{2E}{931.46 m_n} \right) \frac{e^{-\frac{\beta + |\beta|}{2}}}{2E} \frac{M_A}{m_n} Q
-        Q = \left( \mbox{Erf}(\frac{|\beta| - \alpha_{\theta=0}}{2 \sqrt{\alpha_{\theta=0}}}) - \mbox{Erf}(\frac{|\beta| - \alpha_{\theta=\pi}}{2 \sqrt{\alpha_{\theta=\pi}}}) \right) - e^{-\frac{|\beta|}{2}} \left( \mbox{Erf}(\frac{|\beta| + \alpha_{\theta=0}}{2 \sqrt{\alpha_{\theta=0}}}) - \mbox{Erf}(\frac{|\beta| + \alpha_{\theta=\pi}}{2 \sqrt{\alpha_{\theta=\pi}}}) \right)
+        \\frac{d\sigma_s(E)}{dE^\prime} = b^2 \left( 1 - \\frac{2E}{931.46 \\cdot m_n} \\right) 
+            \\frac{e^{-\\frac{\\beta + |\\beta|}{2}}}{2E} \\frac{M_A}{m_n} Q
+
+        Q = \left( \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
+            - \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right) 
+            - e^{-\\frac{|\\beta|}{2}} \left( \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
+            - \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right)
 
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
@@ -572,7 +580,7 @@ def E_prime_min(E, M_A=1.0):
 
     .. math::
 
-        \mbox{min}(E^\prime) = \left(\frac{M_A - m_n}{M_A + m_n}\right)^2 E
+        \mbox{min}(E^\prime) = \left(\\frac{M_A - m_n}{M_A + m_n}\\right)^2 E
 
     Args:
         * E (float): The incident energy of the neutron prior to the 
@@ -613,7 +621,7 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
 
     .. math::
 
-        \sigma(E) = \int \frac{d\sigma_s(E)}{dE^\prime} dE^\prime
+        \sigma(E) = \int \\frac{d\sigma_s(E)}{dE^\prime} dE^\prime
 
     Args:
         * E (float): The incident energy of the neutron prior to the 
