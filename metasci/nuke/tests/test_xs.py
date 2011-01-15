@@ -719,3 +719,10 @@ def test_alpha_given_theta_pi():
     assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, E, M_A, 2.0),  xs.alpha(E_prime, E, np.pi, M_A, 2.0))
 
     assert_array_almost_equal(xs.alpha_given_theta_pi(E_prime, E, M_A, T),  xs.alpha(E_prime, E, np.pi, M_A, T))
+
+
+def test_one_over_gamma_squared():
+    E = np.linspace(-9, 2, 101)
+    rcf = xs.one_over_gamma_squared(E)
+    expected = 1.0 - 2.0 * E / (931.46 * 1.0086649159700001)
+    assert_array_equal(rcf, expected)

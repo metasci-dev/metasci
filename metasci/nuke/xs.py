@@ -472,6 +472,21 @@ def alpha_given_theta_pi(E_prime, E, M_A=1.0, T=300.0):
     return a
 
 
+def one_over_gamma_squared(E):
+    """The realitivistic correction factor for the bound scattering length.
+
+    .. math::
+
+        \frac{1}{\gamma^2} = \left( 1 - \frac{2E}{931.46 m_n} \right)
+
+    Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+    """
+    rcf = (1.0 - (2.0 * E) / (931.46 * m_n))
+    return rcf
+
+
 def d2sigma_s_dE_prime_dOmega(E_prime, E, theta, b=1.0, M_A=1.0, T=300.0):
     """Computes the double differential total scattering cross section from the equation
 
@@ -500,13 +515,14 @@ def d2sigma_s_dE_prime_dOmega(E_prime, E, theta, b=1.0, M_A=1.0, T=300.0):
            http://200.136.52.101/reports-new/indc-reports/indc-nds/indc-nds-0470.pdf.
     """
     kT = k * T
+    rcf = one_over_gamma_squared(E)
 
     _alpha = alpha(E_prime, E, theta, M_A, T) 
     _beta = beta(E_prime, E, T)
 
     power_term = (_beta/2.0) + (_alpha/4.0) + (_beta**2 / (4.0 * _alpha))
 
-    return (1.0 - 2.0 * E / (931.46 * m_n)) * (b**2 / kT) * np.sqrt((np.pi * E_prime) / (_alpha * E)) * np.exp(-power_term)
+    return rcf * (b**2 / kT) * np.sqrt((np.pi * E_prime) / (_alpha * E)) * np.exp(-power_term)
     
 
 def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
