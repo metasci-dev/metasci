@@ -607,5 +607,28 @@ def E_prime_max(E, T=300.0):
     return max_E
 
 
-def sigma_s(E, M_A=1.0):
-    E_prime_min = (M_A - m_n) * E / (M_A + m_n)
+def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
+    """Computes the total scattering cross section by integrating the differetntial 
+    cross section.
+
+    .. math::
+
+        \sigma(E) = \int \frac{d\sigma_s(E)}{dE^\prime} dE^\prime
+
+    Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * b (float): The bound scattering length of the target nucleus.
+        * M_A (float): Atomic mass of the target nucleus [amu].
+        * T (float): Tempurature of the target material [kelvin].
+    """
+    # Find bounds
+    E_prime_lower = E_prime_min(E, M_A)    
+    E_prime_upper = E_prime_max(E, T)    
+
+    sig_s_E = integrate.quad(dsigma_s_dE_prime, E_prime_lower, E_prime_upper, args=(E, b, M_A, T))
+    sig_s_E = sig_s_E[0]
+
+    return sig_s_E
