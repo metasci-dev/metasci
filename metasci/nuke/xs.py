@@ -388,7 +388,33 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     return sigma_a_g
 
 
-def ddif(theta, E_prime, E=1.0, b=1.0, T=300.0, M_A=1.0):
+def d2sigma_s_dE_prime_dOmega(theta, E_prime, E=1.0, b=1.0, M_A=1.0 T=300.0):
+    """Computes the double differential total scattering cross section from the equation
+
+    d2 sigma_s(E) 
+    ------------- =  [1]
+     dE' dOmega
+
+    FIXME: I am untested
+
+    Args:
+        * theta (float): Scattering angle in [radians].
+        * E_prime (float): The exiting energy of the neutron after the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+        * b (float): The bound scattering length of the target nucleus.
+        * M_A (float): Atomic mass of the target nucleus [amu].
+        * T (float): Tempurature of the target material [kelvin].
+
+    Refs:
+        1. Mattes M, Keinert J. Thermal neutron scattering data for the moderator 
+           materials H2O, D2O and ZrHx in ENDF-6 format and as ACE library for 
+           MCNP (X) codes. IAEA report INDC (NDS)-0470. 2005;(April). Available at: 
+           http://200.136.52.101/reports-new/indc-reports/indc-nds/indc-nds-0470.pdf.
+    """
     kT = k * T
 
     alpha = (E_prime + E - 2 * np.sqrt(E_prime*E) * np.cos(theta)) / (kT * M_A / m_n)
@@ -399,5 +425,23 @@ def ddif(theta, E_prime, E=1.0, b=1.0, T=300.0, M_A=1.0):
     return (1.0 - 2.0 * E / (931.46 * m_n)) * (b**2 / kT) * np.sqrt((np.pi * E_prime) / (alpha * E)) * np.exp(-power_term)
     
 
-def sigma_e(E, M_A=1.0):
+def dsigma_s_dE_prime(E_prime, E=1.0, b=1.0, T=300.0, M_A=1.0):
+    """Computes the differential total scattering cross section from an analytic
+    solution to the integral of the double-differentional scattering cross section, 
+    integrated over all solid angles.
+
+    Args:
+        * E_prime (float): The exiting energy of the neutron after the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+        * b (float): The bound scattering length of the target nucleus.
+        * M_A (float): Atomic mass of the target nucleus [amu].
+        * T (float): Tempurature of the target material [kelvin].
+    """
+
+
+def sigma_s(E, M_A=1.0):
     E_prime_min = (M_A - m_n) * E / (M_A + m_n)
