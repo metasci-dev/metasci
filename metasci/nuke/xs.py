@@ -565,5 +565,47 @@ def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
     return deriv
 
 
+def E_prime_min(E, M_A=1.0):
+    """The minimum possible exiting enegy of a neuron after a scattering collision. 
+    This is based on the incident energy and the mass of the target.
+    For a proof, use the conservation of energy and momentum.
+
+    .. math::
+
+        \mbox{min}(E^\prime) = \left(\frac{M_A - m_n}{M_A + m_n}\right)^2 E
+
+    Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * M_A (float): Atomic mass of the target nucleus [amu].
+    """
+    alph = ((M_A - m_n)/(M_A + m_n))**2 * E
+    min_E = alph * E
+    return min_E
+
+
+def E_prime_max(E, T=300.0):
+    """The maximum possible exiting enegy of a neuron after a scattering collision. 
+    This is based on the incident energy and the tempurature of the target.
+    The neutron can gain no more energy than the kinetic energy of the target.
+    In a macroscopic system, this is on average equal to kT.
+
+    .. math::
+
+        \mbox{max}(E^\prime) = E + kT
+
+    Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * T (float): Tempurature of the target material [kelvin].
+    """
+    max_E = E + (k * T)
+    return max_E
+
+
 def sigma_s(E, M_A=1.0):
     E_prime_min = (M_A - m_n) * E / (M_A + m_n)

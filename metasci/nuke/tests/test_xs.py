@@ -722,7 +722,19 @@ def test_alpha_given_theta_pi():
 
 
 def test_one_over_gamma_squared():
-    E = np.linspace(-9, 2, 101)
+    E = np.logspace(-9, 2, 101)
     rcf = xs.one_over_gamma_squared(E)
     expected = 1.0 - 2.0 * E / (931.46 * 1.0086649159700001)
     assert_array_equal(rcf, expected)
+
+
+def test_E_prime_min():
+    assert_equal(0.0, xs.E_prime_min(1.0, xs.m_n))
+    assert_equal(1.0/9.0, xs.E_prime_min(1.0, 2.0*xs.m_n))
+    assert_equal(4.0/9.0, xs.E_prime_min(2.0, 2.0*xs.m_n))
+
+
+def test_E_prime_max():
+    E = np.logspace(-9, 2, 101)
+    T = np.linspace(0, 1800, 101)
+    assert_array_equal(E + (xs.k*T), xs.E_prime_max(E, T))
