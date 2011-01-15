@@ -6,6 +6,7 @@ import numpy as np
 import tables as tb
 from scipy import integrate
 from scipy import constants
+from scipy.special import erf
 
 import isoname
 
@@ -530,6 +531,11 @@ def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
     solution to the integral of the double-differentional scattering cross section, 
     integrated over all solid angles.
 
+    .. math::
+
+        \frac{d\sigma_s(E)}{dE^\prime} = b^2 \left( 1 - \frac{2E}{931.46 m_n} \right) \frac{e^{-\frac{\beta + |\beta|}{2}}}{2E} \frac{M_A}{m_n} Q
+        Q = \left( \mbox{Erf}(\frac{|\beta| - \alpha_{\theta=0}}{2 \sqrt{\alpha_{\theta=0}}}) - \mbox{Erf}(\frac{|\beta| - \alpha_{\theta=\pi}}{2 \sqrt{\alpha_{\theta=\pi}}}) \right) - e^{-\frac{|\beta|}{2}} \left( \mbox{Erf}(\frac{|\beta| + \alpha_{\theta=0}}{2 \sqrt{\alpha_{\theta=0}}}) - \mbox{Erf}(\frac{|\beta| + \alpha_{\theta=\pi}}{2 \sqrt{\alpha_{\theta=\pi}}}) \right)
+
     Args:
         * E_prime (float): The exiting energy of the neutron after the 
           scattering event [MeV].
@@ -542,10 +548,21 @@ def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
         * T (float): Tempurature of the target material [kelvin].
     """
     kT = k * T
+    rcf = one_over_gamma_squared(E)
 
-    alpha = (E_prime + E - 2 * np.sqrt(E_prime*E) * np.cos(theta)) / (kT * M_A / m_n)
-    beta = (E_prime - E) / kT
+    alpha_lower = alpha_given_theta_0(E_prime, E, M_A, T)
+    alpha_upper = alpha_given_theta_pi(E_prime, E, M_A, T)
+    _beta = beta(E_prime, E, T)
     abs_beta = np.abs(beta)
+
+    Q = erf((abs_beta - alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
+        erf((abs_beta - alpha_upper) / (2.0 * np.sqrt(alpha_upper))) + \
+        np.exp(-abs_beta/2.0) * (erf((abs_beta + alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
+        erf((abs_beta + alpha_upper) / (2.0 * np.sqrt(alpha_upper))))
+
+    deriv = (rcf * b**2) * (np.exp(-(_beta + abs_beta)/2.0) / (2.0*E)) * (M_A / m_n) * Q
+
+    return deriv
 
 
 def sigma_s(E, M_A=1.0):
