@@ -487,12 +487,14 @@ def one_over_gamma_squared(E):
         * E (float): The incident energy of the neutron prior to the 
           scattering event [MeV].
     """
-    rcf = (1.0 - (2.0 * E) / (931.46 * m_n))
+    v_squared = 2.0 * E / m_n
+    rcf = 1.0 - (v_squared / 931.46)
     return rcf
 
 
 def d2sigma_s_dE_prime_dOmega(E_prime, E, theta, b=1.0, M_A=1.0, T=300.0):
-    """Computes the double differential total scattering cross section from the equation
+    """Computes the double differential total scattering cross section from the equation.  
+    This is likely only valid in the thermal region.
 
     .. math::
 
@@ -528,49 +530,55 @@ def d2sigma_s_dE_prime_dOmega(E_prime, E, theta, b=1.0, M_A=1.0, T=300.0):
 
     return rcf * (b**2 / kT) * np.sqrt((np.pi * E_prime) / (_alpha * E)) * np.exp(-power_term)
     
+#
+# Failed analytic soltion to the integral of the double differential 
+# scattering cross-section over all solid angles.  This is because the 
+# S(alpha, beta) term was only valid in the thermal regime but was used 
+# even up to fast energies.
+#
 
-def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
-    """Computes the differential total scattering cross section from an analytic
-    solution to the integral of the double-differentional scattering cross section, 
-    integrated over all solid angles.
-
-    .. math::
-
-        \\frac{d\sigma_s(E)}{dE^\prime} = b^2 \left( 1 - \\frac{2E}{931.46 \\cdot m_n} \\right) 
-            \\frac{e^{-\\frac{\\beta + |\\beta|}{2}}}{2E} \\frac{M_A}{m_n} Q
-
-        Q = \left( \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
-            - \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right) 
-            - e^{-\\frac{|\\beta|}{2}} \left( \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
-            - \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right)
-
-    Args:
-        * E_prime (float): The exiting energy of the neutron after the 
-          scattering event [MeV].
-        * E (float): The incident energy of the neutron prior to the 
-          scattering event [MeV].
-
-    Keyword Args:
-        * b (float): The bound scattering length of the target nucleus.
-        * M_A (float): Atomic mass of the target nucleus [amu].
-        * T (float): Tempurature of the target material [kelvin].
-    """
-    kT = k * T
-    rcf = one_over_gamma_squared(E)
-
-    alpha_lower = alpha_given_theta_0(E_prime, E, M_A, T)
-    alpha_upper = alpha_given_theta_pi(E_prime, E, M_A, T)
-    _beta = beta(E_prime, E, T)
-    abs_beta = np.abs(_beta)
-
-    Q = erf((abs_beta - alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
-        erf((abs_beta - alpha_upper) / (2.0 * np.sqrt(alpha_upper))) + \
-        np.exp(-abs_beta/2.0) * (erf((abs_beta + alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
-        erf((abs_beta + alpha_upper) / (2.0 * np.sqrt(alpha_upper))))
-
-    deriv = (rcf * b**2) * (np.exp(-(_beta + abs_beta)/2.0) / (2.0*E)) * (M_A / m_n) * Q
-
-    return deriv
+#def dsigma_s_dE_prime(E_prime, E, b=1.0, M_A=1.0, T=300.0):
+#    """Computes the differential total scattering cross section from an analytic
+#    solution to the integral of the double-differentional scattering cross section, 
+#    integrated over all solid angles.
+#
+#    .. math::
+#
+#        \\frac{d\sigma_s(E)}{dE^\prime} = b^2 \left( 1 - \\frac{2E}{931.46 \\cdot m_n} \\right) 
+#            \\frac{e^{-\\frac{\\beta + |\\beta|}{2}}}{2E} \\frac{M_A}{m_n} Q
+#
+#        Q = \left( \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
+#            - \mbox{Erf}\left(\\frac{|\\beta| - \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right) 
+#            - e^{-\\frac{|\\beta|}{2}} \left( \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=0}}{2 \sqrt{\\alpha_{\\theta=0}}}\\right) 
+#            - \mbox{Erf}\left(\\frac{|\\beta| + \\alpha_{\\theta=\pi}}{2 \sqrt{\\alpha_{\\theta=\pi}}}\\right) \\right)
+#
+#    Args:
+#        * E_prime (float): The exiting energy of the neutron after the 
+#          scattering event [MeV].
+#        * E (float): The incident energy of the neutron prior to the 
+#          scattering event [MeV].
+#
+#    Keyword Args:
+#        * b (float): The bound scattering length of the target nucleus.
+#        * M_A (float): Atomic mass of the target nucleus [amu].
+#        * T (float): Tempurature of the target material [kelvin].
+#    """
+#    kT = k * T
+#    rcf = one_over_gamma_squared(E)
+#
+#    alpha_lower = alpha_given_theta_0(E_prime, E, M_A, T)
+#    alpha_upper = alpha_given_theta_pi(E_prime, E, M_A, T)
+#    _beta = beta(E_prime, E, T)
+#    abs_beta = np.abs(_beta)
+#
+#    Q = erf((abs_beta - alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
+#        erf((abs_beta - alpha_upper) / (2.0 * np.sqrt(alpha_upper))) + \
+#        np.exp(-abs_beta/2.0) * (erf((abs_beta + alpha_lower) / (2.0 * np.sqrt(alpha_lower))) - \
+#        erf((abs_beta + alpha_upper) / (2.0 * np.sqrt(alpha_upper))))
+#
+#    deriv = (rcf * b**2) * (np.exp(-(_beta + abs_beta)/2.0) / (2.0*E)) * (M_A / m_n) * Q * np.exp(-np.sqrt(E))
+#
+#    return deriv
 
 
 def E_prime_min(E, M_A=1.0):
@@ -615,13 +623,30 @@ def E_prime_max(E, T=300.0):
     return max_E
 
 
-def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
-    """Computes the total scattering cross section by integrating the differetntial 
-    cross section.
+def sigma_s_const(b):
+    """Computes the constant scattering cross-section based on the 
+    scattering length.
 
     .. math::
 
-        \sigma(E) = \int \\frac{d\sigma_s(E)}{dE^\prime} dE^\prime
+        \sigma_s = 4 \pi b^2
+
+    Args:
+        * b (float): The bound scattering length of the target nucleus.
+    """
+    sig_s = 4.0 * np.pi *( b**2)
+
+    return sig_s
+
+
+def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
+    """Computes the total scattering cross section from an empirical model.
+
+    .. math::
+
+        \\sigma_s(E) = 4 \\pi b^2 \\cdot \\left( 1 - \\frac{2E}{931.46 \\cdot m_n} \\right) \\cdot
+                      \\left( 1 + \\frac{m_n}{M_A} \\frac{kT}{E} \\cdot e^{-\\frac{M_A}{m_n}\\frac{E}{kT}} \\right) 
+                      \\cdot \\left( 1 - \\mbox{Exp}\\left[-\\sqrt{\\frac{0.1}{E}}\\right] \\right)
 
     Args:
         * E (float): The incident energy of the neutron prior to the 
@@ -632,11 +657,17 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
         * M_A (float): Atomic mass of the target nucleus [amu].
         * T (float): Tempurature of the target material [kelvin].
     """
-    # Find bounds
-    E_prime_lower = E_prime_min(E, M_A)    
-    E_prime_upper = E_prime_max(E, T)    
+    kT_over_AE = k * T / ((M_A / m_n) * E)
 
-    sig_s_E = integrate.quad(dsigma_s_dE_prime, E_prime_lower, E_prime_upper, args=(E, b, M_A, T))
-    sig_s_E = sig_s_E[0]
+    sig_s = sigma_s_const(b)
+    rcf = one_over_gamma_squared(E)
+    
+    sig_s_E = (rcf * sig_s) * (1.0 + kT_over_AE * np.exp(-1.0/kT_over_AE)) * (1.0 - np.exp(-np.sqrt(0.1/E))) 
 
     return sig_s_E
+
+
+    # Find bounds
+#    E_prime_lower = E_prime_min(E, M_A)    
+#    E_prime_upper = E_prime_max(E, T)    
+
