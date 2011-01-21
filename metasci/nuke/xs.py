@@ -46,6 +46,12 @@ class XSCache(dict):
             iso = int(m.group(1))
             self[key] = get_sigma_a_n(iso)
 
+        # Grab scattering length from the file
+        m = re.match('b_(\d+)', key)
+        if (m is not None) and (key not in self):
+            iso = int(m.group(1))
+            self[key] = get_b(iso)
+
         # Calculate the low-res flux as needed
         if (key == 'phi_g') and ('phi_g' not in self):
             self['phi_g'] = phi_g(self['E_g'], self['E_n'], self['phi_n'])
@@ -165,6 +171,43 @@ def get_sigma_a_n(iso):
 
     return sigma_a_n
 
+
+def get_b(iso):
+    """Grabs an isotope's neutron scattering length from the nuc_data library.
+    Because the coherent and incoherent lenghts are in general complex, the 
+    scattering length is computed as follows.
+
+    .. math::
+        b = \\sqrt{\\left b_{\mbox{coh}} \\right|^2 + \\left b_{\mbox{inc}} \\right|^2}
+
+    Args:
+        * iso (zzaaam): Isotope name, in appropriate form.
+
+    Returns:
+        * b (float): The scattering length in [cm].
+    """
+    with tb.openFile(nuc_data, 'r') as f:
+        # Try finding the isotope
+        rows = [(row['b_coherent'], row['b_incoherent']) for row in 
+                f.root.neutron.scattering_length.where("(iso_zz == {0})".format(iso))]
+
+        # Try finding the element
+        if len(rows) == 0:
+            rows = [(row['b_coherent'], row['b_incoherent']) for row in 
+                    f.root.neutron.scattering_length.where("(iso_zz == {0})".format(10000 * (iso // 10000)))]
+
+        # Guess the next lowest element
+        n = 1
+        while len(rows) == 0:
+            rows = [(row['b_coherent'], row['b_incoherent']) for row in 
+                    f.root.neutron.scattering_length.where("(iso_zz == {0})".format(10000 * ((iso // 10000) - n)))]
+
+
+    b_coh, b_inc = rows[0]
+
+    b = np.sqrt(np.abs(b_coh)**2 + np.abs(b_inc)**2)
+
+    return b
 
 ##############################
 ### Partial group collapse ###
@@ -409,6 +452,9 @@ def alpha(E_prime, E, theta, M_A=1.0, T=300.0):
     Keyword Args:
         * M_A (float): Atomic mass of the target nucleus [amu].
         * T (float): Tempurature of the target material [kelvin].
+
+    Returns:
+        * a (float): alpha value.
     """
     a = (E_prime + E - 2 * np.sqrt(E_prime*E) * np.cos(theta)) / (k * T * M_A / m_n)
     return a
@@ -429,6 +475,9 @@ def beta(E_prime, E, T=300.0):
 
     Keyword Args:
         * T (float): Tempurature of the target material [kelvin].
+
+    Returns:
+        * b (float): beta value.
     """
     b = (E_prime - E) / (k*T)
     return b
