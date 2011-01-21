@@ -132,6 +132,18 @@ def grab_kaeri_neutron_xs(nuclist, dir_out='xs_html/'):
             f.write(kaeri.read())
 
 
+def grab_scattering_lengths(file_out='scattering_lengths.html'):
+    """Grapbs the scattering cross-section lengths for neutrons from the NIST website.
+
+    Keyword Args:
+        * file_out (str): Path to output file. 
+    """
+    nist = urlopen("http://www.ncnr.nist.gov/resources/n-lengths/list.html")
+
+    with open(file_out, 'w') as f:
+        f.write(nist.read())
+
+
 # The following is what I used to grab the decay library, 
 # but good lord does it need a rewrite! I am too ashamed to 
 # expose it in the module, yet I feel that it needs to be 

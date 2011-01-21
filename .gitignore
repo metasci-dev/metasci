@@ -11,3 +11,4 @@ build/
 # Nuclear data that is probably under a restricted license
 metasci/nuke/xs_html/
 metasci/nuke/cinder.dat
+metasci/nuke/scattering_lengths.html

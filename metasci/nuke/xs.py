@@ -667,6 +667,8 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
     return sig_s_E
 
 
+#def sigma_s_gh(E)
+
     # Find bounds
 #    E_prime_lower = E_prime_min(E, M_A)    
 #    E_prime_upper = E_prime_max(E, T)    
