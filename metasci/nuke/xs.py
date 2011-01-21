@@ -178,7 +178,7 @@ def get_b(iso):
     scattering length is computed as follows.
 
     .. math::
-        b = \\sqrt{\\left b_{\mbox{coh}} \\right|^2 + \\left b_{\mbox{inc}} \\right|^2}
+        b = \\sqrt{\\left| b_{\mbox{coh}} \\right|^2 + \\left| b_{\mbox{inc}} \\right|^2}
 
     Args:
         * iso (zzaaam): Isotope name, in appropriate form.
@@ -716,7 +716,69 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
     return sig_s_E
 
 
-#def sigma_s_gh(E)
+def sigma_s_gh(iso, E_g=None, E_n=None, phi_n=None):
+    """Calculates the neutron scattering cross-section kernel for an isotope for a new, lower resolution
+    group structure using a higher fidelity flux.  Note that g, h index G, n indexes N, and G < N.
+    g is for the incident energy and h is for the exiting energy.
+
+    .. math::
+        \\sigma_{s, g\\to h} = \\frac{\\int_{E_g}^{E_{g+1}} \\int_{E_h}^{E_{h+1}} \\sigma_s(E) P(E \\to E^\\prime) \\phi(E) dE^\\prime dE}
+                                {\\int_{E_g}^{E_{g+1}} \\phi(E) dE}
+
+    where 
+
+    .. math::
+        P(E \\to E^\\prime) dE^\\prime = \\frac{dE^\\prime}{E + kT - \\left( \\frac{M_A - m_n}{M_A + m_n} \\right)^2 E}
+
+
+    Note: This always pulls the scattering length out of the nuc_data library.    
+
+    Args:
+        * iso (int or str): An isotope to calculate the fission cross-section for.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * sig_s_gh (numpy array): A numpy array of the scattering kernel.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the fission XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    sigma_f_n_iso_zz = 'sigma_f_n_{0}'.format(iso_zz)
+    sigma_f_g_iso_zz = 'sigma_f_g_{0}'.format(iso_zz)
+
+    # Don't recalculate anything if you don't have to
+    if sigma_f_g_iso_zz in xs_cache:
+        return xs_cache[sigma_f_g_iso_zz]
+    else:
+        sigma_f_n = xs_cache[sigma_f_n_iso_zz]
+
+    # Perform the group collapse, knowing that the right data is in the cache
+    sigma_f_g = partial_group_collapse(sigma_f_n)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_f_g_iso_zz] = sigma_f_g
+
+    return sigma_f_g
+
+
 
     # Find bounds
 #    E_prime_lower = E_prime_min(E, M_A)    
