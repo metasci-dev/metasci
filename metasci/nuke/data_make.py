@@ -1212,8 +1212,8 @@ def make_scattering_lengths(h5_file='nuc_data.h5', data_file='scattering_lengths
         slrow['iso_LL'] = nist_2_LLAAAM(md['iso'])
         slrow['iso_zz'] = nist_2_zzaaam(md['iso'])
 
-        slrow['b_coherent'] = nist_num(md['b_coherent'])
-        slrow['b_incoherent'] = nist_num(md['b_incoherent'])
+        slrow['b_coherent'] = nist_num(md['b_coherent']) * (10**-13)
+        slrow['b_incoherent'] = nist_num(md['b_incoherent']) * (10**-13)
 
         slrow['xs_coherent'] = nist_num(md['xs_coherent'])
         slrow['xs_incoherent'] = nist_num(md['xs_incoherent'])
