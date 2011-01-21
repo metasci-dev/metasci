@@ -681,9 +681,12 @@ def sigma_s_const(b):
         \sigma_s = 4 \pi b^2
 
     Args:
-        * b (float): The bound scattering length of the target nucleus.
+        * b (float): The bound scattering length of the target nucleus [cm].
+
+    Returns:
+        * sig_s (float): the micorscopic scattering cross-section [barns].
     """
-    sig_s = 4.0 * np.pi * (b**2)
+    sig_s = 4.0 * np.pi * (b**2) * (10.0**24)
 
     return sig_s
 
@@ -716,7 +719,7 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
     return sig_s_E
 
 
-def sigma_s_gh(iso, E_g=None, E_n=None, phi_n=None):
+def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     """Calculates the neutron scattering cross-section kernel for an isotope for a new, lower resolution
     group structure using a higher fidelity flux.  Note that g, h index G, n indexes N, and G < N.
     g is for the incident energy and h is for the exiting energy.
@@ -735,6 +738,7 @@ def sigma_s_gh(iso, E_g=None, E_n=None, phi_n=None):
 
     Args:
         * iso (int or str): An isotope to calculate the fission cross-section for.
+        * T (float): Tempurature of the target material [kelvin].
 
     Keyword Args:
         If any of these are None-valued, values from the cache are used.
@@ -761,22 +765,25 @@ def sigma_s_gh(iso, E_g=None, E_n=None, phi_n=None):
 
     # Get the fission XS
     iso_zz = isoname.mixed_2_zzaaam(iso)
-    sigma_f_n_iso_zz = 'sigma_f_n_{0}'.format(iso_zz)
-    sigma_f_g_iso_zz = 'sigma_f_g_{0}'.format(iso_zz)
+    sigma_s_gh_iso_zz_T = 'sigma_s_gh_{0}_{1}'.format(iso_zz, T)
 
     # Don't recalculate anything if you don't have to
-    if sigma_f_g_iso_zz in xs_cache:
-        return xs_cache[sigma_f_g_iso_zz]
-    else:
-        sigma_f_n = xs_cache[sigma_f_n_iso_zz]
+    if sigma_s_gh_iso_zz_T in xs_cache:
+        return xs_cache[sigma_s_gh_iso_zz_T]
 
-    # Perform the group collapse, knowing that the right data is in the cache
-    sigma_f_g = partial_group_collapse(sigma_f_n)
+    # Get some needed data
+    G = len(xs_cache['E_g']) - 1
+    b = xs_cache['b_{0}'.format(iso_zz)]
+
+    # Initialize the scattering kernel
+    sig_s_gh = np.zeros((G, G), dtype=float)
+
+    num = lambda E: 
 
     # Put this value back into the cache, with the appropriate label
-    xs_cache[sigma_f_g_iso_zz] = sigma_f_g
+    xs_cache[sigma_s_gh_iso_zz_T] = sigma_s_gh
 
-    return sigma_f_g
+    return sig_s_gh
 
 
 
