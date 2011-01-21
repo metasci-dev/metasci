@@ -52,6 +52,12 @@ class XSCache(dict):
             iso = int(m.group(1))
             self[key] = get_b(iso)
 
+        # Grab atomic mass from the file
+        m = re.match('M_A_(\d+)', key)
+        if (m is not None) and (key not in self):
+            iso = int(m.group(1))
+            self[key] = get_M_A(iso)
+
         # Calculate the low-res flux as needed
         if (key == 'phi_g') and ('phi_g' not in self):
             self['phi_g'] = phi_g(self['E_g'], self['E_n'], self['phi_n'])
@@ -202,12 +208,38 @@ def get_b(iso):
             rows = [(row['b_coherent'], row['b_incoherent']) for row in 
                     f.root.neutron.scattering_length.where("(iso_zz == {0})".format(10000 * ((iso // 10000) - n)))]
 
-
     b_coh, b_inc = rows[0]
 
     b = np.sqrt(np.abs(b_coh)**2 + np.abs(b_inc)**2)
 
     return b
+
+
+def get_M_A(iso):
+    """Grabs an isotope's atomic mass from the nuc_data library.
+
+    Args:
+        * iso (zzaaam): Isotope name, in appropriate form.
+
+    Returns:
+        * M_A (float): The atomic mass [amu].
+    """
+    with tb.openFile(nuc_data, 'r') as f:
+        # Try finding the isotope
+        rows = [row['value'] for row in f.root.A.where("(iso_zz == {0})".format(iso))]
+
+        # If the isotope is not found, maybe a stable version is present.
+        if len(rows) == 0:
+            rows = [row['value'] for row in f.root.A.where("(iso_zz == {0})".format(10 * (iso // 10)))]
+
+    if len(rows) == 0:
+        # Take best guess 
+        m = (iso // 10) % 1000
+        M_A = float(m)
+    else:
+        M_A = rows[0]
+
+    return M_A
 
 ##############################
 ### Partial group collapse ###
@@ -719,6 +751,34 @@ def sigma_s_E(E, b=1.0, M_A=1.0, T=300.0):
     return sig_s_E
 
 
+def P(E, E_prime, M_A=1.0, T=300.0):
+    """Calculates the neutron scattering transfer probability from
+
+    .. math::
+        P(E \\to E^\\prime) = \\frac{1}{E + kT - \\left( \\frac{M_A - m_n}{M_A + m_n} \\right)^2 E}
+
+    as long as 
+
+    .. math::
+        \\left( \\frac{M_A - m_n}{M_A + m_n} \\right)^2 E \\le E^\\prime \\le E + kT
+
+    The probability is zero outside of this range.
+
+    Args:
+        * E (float): The incident energy of the neutron prior to the 
+          scattering event [MeV].
+        * E_prime (float): The exiting energy of the neutron after the 
+          scattering event [MeV].
+
+    Keyword Args:
+        * M_A (float): Atomic mass of the target nucleus [amu].
+        * T (float): Tempurature of the target material [kelvin].
+
+    Returns:
+        * p (float): A transfer probablity.
+    """
+
+
 def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     """Calculates the neutron scattering cross-section kernel for an isotope for a new, lower resolution
     group structure using a higher fidelity flux.  Note that g, h index G, n indexes N, and G < N.
@@ -727,12 +787,6 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     .. math::
         \\sigma_{s, g\\to h} = \\frac{\\int_{E_g}^{E_{g+1}} \\int_{E_h}^{E_{h+1}} \\sigma_s(E) P(E \\to E^\\prime) \\phi(E) dE^\\prime dE}
                                 {\\int_{E_g}^{E_{g+1}} \\phi(E) dE}
-
-    where 
-
-    .. math::
-        P(E \\to E^\\prime) dE^\\prime = \\frac{dE^\\prime}{E + kT - \\left( \\frac{M_A - m_n}{M_A + m_n} \\right)^2 E}
-
 
     Note: This always pulls the scattering length out of the nuc_data library.    
 
@@ -774,6 +828,7 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     # Get some needed data
     G = len(xs_cache['E_g']) - 1
     b = xs_cache['b_{0}'.format(iso_zz)]
+    M_A = xs_cache['M_A_{0}'.format(iso_zz)]
 
     # Initialize the scattering kernel
     sig_s_gh = np.zeros((G, G), dtype=float)
