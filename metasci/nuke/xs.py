@@ -1,6 +1,7 @@
 """This module provides functionality to automatically extract cross-sections
 from the nulear database."""
 import re
+from itertools import product
 
 import numpy as np
 import tables as tb
@@ -777,6 +778,17 @@ def P(E, E_prime, M_A=1.0, T=300.0):
     Returns:
         * p (float): A transfer probablity.
     """
+    # Find bounds
+    E_prime_lower = E_prime_min(E, M_A)    
+    E_prime_upper = E_prime_max(E, T)    
+
+    if E_prime_lower <= E_prime <= E_prime_upper:
+        p = 1.0 / (E_prime_upper - E_prime_lower)
+    else:
+        p = 0.0
+
+    return p
+    
 
 
 def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
@@ -833,7 +845,21 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     # Initialize the scattering kernel
     sig_s_gh = np.zeros((G, G), dtype=float)
 
-    num = lambda E: 
+
+    # Calculate all values of the kernel
+    for g, h in product(range(G), range(G)):
+        # Numerator inetgration term 
+        dnumer = lambda _E_prime, _E: sigma_s_E(_E, b, M_A, T) *  P(_E, _E_prime, M_A, T) * xs_cache['phi_g'][g]
+
+        # Integral
+        numer = integrate.dblquad(dnumer, xs_cache['E_g'][g], xs_cache['E_g'][g+1], 
+                                          lambda E_h: xs_cache['E_g'][h], lambda E_h: xs_cache['E_g'][h+1])
+
+        # Denominator term, analytically integrated
+        denom = xs_cache['phi_g'][g] * (xs_cache['E_g'][g+1] - xs_cache['E_g'][g])
+
+        # Cross section value
+        sig_s_gh[g, h] = numer / denom 
 
     # Put this value back into the cache, with the appropriate label
     xs_cache[sigma_s_gh_iso_zz_T] = sigma_s_gh
@@ -841,8 +867,57 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     return sig_s_gh
 
 
+def sigma_s_g(iso, T, E_g=None, E_n=None, phi_n=None):
+    """Calculates the neutron scattering cross-section for an isotope. 
 
-    # Find bounds
-#    E_prime_lower = E_prime_min(E, M_A)    
-#    E_prime_upper = E_prime_max(E, T)    
+    .. math::
+        \\sigma_{s, g} = \\sum_{h} \\sigma_{s, g\\to h} 
+
+    Args:
+        * iso (int or str): An isotope to calculate the fission cross-section for.
+        * T (float): Tempurature of the target material [kelvin].
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * sig_s_g (numpy array): A numpy array of the scattering cross-section.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the fission XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    sigma_s_g_iso_zz_T = 'sigma_s_g_{0}_{1}'.format(iso_zz, T)
+    sigma_s_gh_iso_zz_T = 'sigma_s_gh_{0}_{1}'.format(iso_zz, T)
+
+    # Don't recalculate anything if you don't have to
+    if sigma_s_g_iso_zz_T in xs_cache:
+        return xs_cache[sigma_s_g_iso_zz_T]
+
+    # This calculation requires the scattering kernel
+    if sigma_s_gh_iso_zz_T not in xs_cache:
+        xs_cache[sigma_s_gh_iso_zz_T] = sigma_s_gh(iso, T, E_g, E_n, phi_n)
+
+    # Sum over all h indeces
+    sig_s_g = xs_cache[sigma_s_gh_iso_zz_T].sum(axis=1)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_s_g_iso_zz_T] = sigma_s_g
+
+    return sig_s_g
 
