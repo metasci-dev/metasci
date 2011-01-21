@@ -634,7 +634,7 @@ def sigma_s_const(b):
     Args:
         * b (float): The bound scattering length of the target nucleus.
     """
-    sig_s = 4.0 * np.pi *( b**2)
+    sig_s = 4.0 * np.pi * (b**2)
 
     return sig_s
 
