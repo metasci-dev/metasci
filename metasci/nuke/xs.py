@@ -5,9 +5,12 @@ from itertools import product
 
 import numpy as np
 import tables as tb
-from scipy import integrate
 from scipy import constants
 from scipy.special import erf
+
+# Integration imports
+from scipy import integrate
+import metasci.mathematics.integrate as msmintegrate
 
 import isoname
 
@@ -852,9 +855,11 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
         dnumer = lambda _E_prime, _E: sigma_s_E(_E, b, M_A, T) *  P(_E, _E_prime, M_A, T) * xs_cache['phi_g'][g]
 
         # Integral
-        numer = integrate.dblquad(dnumer, xs_cache['E_g'][g], xs_cache['E_g'][g+1], 
-                                          lambda E_h: xs_cache['E_g'][h], lambda E_h: xs_cache['E_g'][h+1])
-        numer = numer[0]
+        nE = 101
+        E_space = np.logspace(np.log10(xs_cache['E_g'][g]), np.log10(xs_cache['E_g'][g+1]), nE)
+        E_prime_space = np.logspace(np.log10(xs_cache['E_g'][h]), np.log10(xs_cache['E_g'][h+1]), 51)
+
+        numer = msmintegrate.dbltrapz(dnumer, E_space, E_prime_space)
 
         # Denominator term, analytically integrated
         denom = xs_cache['phi_g'][g] * (xs_cache['E_g'][g+1] - xs_cache['E_g'][g])
