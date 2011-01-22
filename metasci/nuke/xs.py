@@ -863,7 +863,7 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
         sig_s_gh[g, h] = numer / denom 
 
     # Put this value back into the cache, with the appropriate label
-    xs_cache[sigma_s_gh_iso_zz_T] = sigma_s_gh
+    xs_cache[sigma_s_gh_iso_zz_T] = sig_s_gh
 
     return sig_s_gh
 
