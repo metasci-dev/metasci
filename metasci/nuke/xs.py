@@ -855,9 +855,9 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
         dnumer = lambda _E_prime, _E: sigma_s_E(_E, b, M_A, T) *  P(_E, _E_prime, M_A, T) * xs_cache['phi_g'][g]
 
         # Integral
-        nE = 101
+        nE = 26
         E_space = np.logspace(np.log10(xs_cache['E_g'][g]), np.log10(xs_cache['E_g'][g+1]), nE)
-        E_prime_space = np.logspace(np.log10(xs_cache['E_g'][h]), np.log10(xs_cache['E_g'][h+1]), 51)
+        E_prime_space = np.logspace(np.log10(xs_cache['E_g'][h]), np.log10(xs_cache['E_g'][h+1]), nE)
 
         numer = msmintegrate.dbltrapz(dnumer, E_space, E_prime_space)
 
