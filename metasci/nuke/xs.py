@@ -918,7 +918,7 @@ def sigma_s(iso, T, E_g=None, E_n=None, phi_n=None):
     sig_s_g = xs_cache[sigma_s_gh_iso_zz_T].sum(axis=1)
 
     # Put this value back into the cache, with the appropriate label
-    xs_cache[sigma_s_g_iso_zz_T] = sigma_s_g
+    xs_cache[sigma_s_g_iso_zz_T] = sig_s_g
 
     return sig_s_g
 
