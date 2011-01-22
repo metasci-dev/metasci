@@ -196,18 +196,18 @@ def get_b(iso):
     with tb.openFile(nuc_data, 'r') as f:
         # Try finding the isotope
         rows = [(row['b_coherent'], row['b_incoherent']) for row in 
-                f.root.neutron.scattering_length.where("(iso_zz == {0})".format(iso))]
+                f.root.neutron.scattering_lengths.where("(iso_zz == {0})".format(iso))]
 
         # Try finding the element
         if len(rows) == 0:
             rows = [(row['b_coherent'], row['b_incoherent']) for row in 
-                    f.root.neutron.scattering_length.where("(iso_zz == {0})".format(10000 * (iso // 10000)))]
+                    f.root.neutron.scattering_lengths.where("(iso_zz == {0})".format(10000 * (iso // 10000)))]
 
         # Guess the next lowest element
         n = 1
         while len(rows) == 0:
             rows = [(row['b_coherent'], row['b_incoherent']) for row in 
-                    f.root.neutron.scattering_length.where("(iso_zz == {0})".format(10000 * ((iso // 10000) - n)))]
+                    f.root.neutron.scattering_lengths.where("(iso_zz == {0})".format(10000 * ((iso // 10000) - n)))]
 
     b_coh, b_inc = rows[0]
 
