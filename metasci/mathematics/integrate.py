@@ -21,4 +21,4 @@ def dlbtrapz(func, x, y):
 
     out = integrate.trapz(xtrapz, x)
 
-    return x
+    return out
