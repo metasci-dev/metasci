@@ -38,3 +38,12 @@ Additionally, some useful special functions are also offered that do not come st
       :members:
 
       .. automethod:: __call__
+
+
+=================================================================
+:mod:`mathematics.integrate` -- Some Integration Helper Functions
+=================================================================
+
+.. automodule:: metasci.mathematics.integrate
+   :members:
+   :inherited-members:
