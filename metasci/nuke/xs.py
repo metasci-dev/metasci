@@ -867,7 +867,7 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
     return sig_s_gh
 
 
-def sigma_s_g(iso, T, E_g=None, E_n=None, phi_n=None):
+def sigma_s(iso, T, E_g=None, E_n=None, phi_n=None):
     """Calculates the neutron scattering cross-section for an isotope. 
 
     .. math::
