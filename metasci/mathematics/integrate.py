@@ -3,7 +3,7 @@
 import numpy as np
 from scipy import integrate
 
-def dlbtrapz(func, x, y):
+def dbltrapz(func, x, y):
     """Performs a double trapazoidal integral for a function or an x and y quadrature.
 
     Args:
