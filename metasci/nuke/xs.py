@@ -854,6 +854,7 @@ def sigma_s_gh(iso, T, E_g=None, E_n=None, phi_n=None):
         # Integral
         numer = integrate.dblquad(dnumer, xs_cache['E_g'][g], xs_cache['E_g'][g+1], 
                                           lambda E_h: xs_cache['E_g'][h], lambda E_h: xs_cache['E_g'][h+1])
+        numer = numer[0]
 
         # Denominator term, analytically integrated
         denom = xs_cache['phi_g'][g] * (xs_cache['E_g'][g+1] - xs_cache['E_g'][g])
