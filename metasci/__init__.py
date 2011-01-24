@@ -469,29 +469,39 @@ def NinesUniformBins(alpha, beta, N):
         l[i] = 1.0 - l[i]
     return l
 
-def StairStep(xdat, ydat, N):
+
+def stair_step(xdat, ydat):
     """Makes data sets suitable for graphing as a stair step plot.
 
     Args:
         * `xdat` (sequence): Independent variable data, has length N+1.
         * `ydat` (sequence): Dependent variable data, has length N.
-        * `N` (int): Number of stairs, or bins.
 
     Returns:
         * `xl` (list): Independent variable stair-step data.
         * `yl` (list): Dependent variable stair-step data.
     """
+    # Grab the number of point, N
+    N = len(ydat)
+    assert N + 1 == len(xdat)
 
+    # Initilaize data
     xl = [xdat[0]]
     yl = [ydat[0]]
+
+    # Loop through all points
     for n in range(N-1):
         xl.append(xdat[n+1])
         yl.append(ydat[n])
         xl.append(xdat[n+1])
         yl.append(ydat[n+1])
+
+    # Finalize data
     xl.append(xdat[N])
     yl.append(ydat[N-1])
+
     return xl, yl
+
 
 ########################
 ### Scale Exchangers ###
