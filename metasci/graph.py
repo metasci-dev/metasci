@@ -9,7 +9,7 @@ rc('text', usetex=True)
 rc('font', family='roman')
 
 ### Other MetaSci functions ###
-from . import StairStep 
+from . import stair_step 
 from . import Nines2Log
 from . import LogLabelConvert
 
@@ -308,7 +308,7 @@ def StairStepEnergy(data, energy_bins=[], G=3, elower=(10.0**-9), eupper=10.0, *
                 data[n] = 10.0**-300
 
     #plot data
-    x, y = StairStep(energy_bins, data, G)
+    x, y = stair_step(energy_bins, data)
     plt.plot(x, y, kwgraph['colorline'], label=kwgraph['datalabel'])
 
     set_axis(**kwgraph)
