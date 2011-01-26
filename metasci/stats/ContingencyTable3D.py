@@ -345,6 +345,7 @@ class ContingencyTable3D(object):
             U_x_R_k  = I_Rx_k / H_x_k
             U_x_R_y.append(U_x_R_k)
 
+        self.U_x_R_y = np.array(U_x_R_y)
         self.mu_U_x_R = np.mean(U_x_R_y)
         self.sigma_U_x_R = np.std(U_x_R_y)
         self.se_U_x_R = self.sigma_U_x_R / np.sqrt(self.K)
@@ -361,6 +362,7 @@ class ContingencyTable3D(object):
             U_y_R_j  = I_Ry_j / H_y_j
             U_y_R_x.append(U_y_R_j)
 
+        self.U_y_R_x = np.array(U_y_R_x)
         self.mu_U_y_R = np.mean(U_y_R_x)
         self.sigma_U_y_R = np.std(U_y_R_x)
         self.se_U_y_R = self.sigma_U_y_R / np.sqrt(self.J)
@@ -1788,58 +1790,60 @@ def CT3D_TableModel(I, J, K, extracols={}, xdscrt=False, ydscrt=False, Rdscrt=Fa
         'M5':      tb.Float64Col(pos=49),
         'S':       tb.Float64Col(pos=50),
 
-        'mu_U_x_R':    tb.Float64Col(pos=51),
-        'sigma_U_x_R': tb.Float64Col(pos=52),
-        'se_U_x_R':    tb.Float64Col(pos=53),
-        'cv_U_x_R':    tb.Float64Col(pos=54),
+        'U_x_R_y':     tb.Float64Col(pos=51, shape=(K,)), 
+        'mu_U_x_R':    tb.Float64Col(pos=52),
+        'sigma_U_x_R': tb.Float64Col(pos=53),
+        'se_U_x_R':    tb.Float64Col(pos=54),
+        'cv_U_x_R':    tb.Float64Col(pos=55),
 
-        'mu_U_y_R':    tb.Float64Col(pos=55),
-        'sigma_U_y_R': tb.Float64Col(pos=56),
-        'se_U_y_R':    tb.Float64Col(pos=57),
-        'cv_U_y_R':    tb.Float64Col(pos=58),
+        'U_y_R_x':     tb.Float64Col(pos=56, shape=(J,)), 
+        'mu_U_y_R':    tb.Float64Col(pos=57),
+        'sigma_U_y_R': tb.Float64Col(pos=58),
+        'se_U_y_R':    tb.Float64Col(pos=59),
+        'cv_U_y_R':    tb.Float64Col(pos=60),
 
-        'cv_U_x_y_R': tb.Float64Col(pos=59),
+        'cv_U_x_y_R': tb.Float64Col(pos=61),
 
-        'eta_R_x_y':       tb.Float64Col(pos=60, shape=(J, K)),
-        'mu_eta_R_x_y':    tb.Float64Col(pos=61),
-        'sigma_eta_R_x_y': tb.Float64Col(pos=62),
-        'se_eta_R_x_y':    tb.Float64Col(pos=63),
-        'cv_eta_R_x_y':    tb.Float64Col(pos=64),
+        'eta_R_x_y':       tb.Float64Col(pos=62, shape=(J, K)),
+        'mu_eta_R_x_y':    tb.Float64Col(pos=63),
+        'sigma_eta_R_x_y': tb.Float64Col(pos=64),
+        'se_eta_R_x_y':    tb.Float64Col(pos=65),
+        'cv_eta_R_x_y':    tb.Float64Col(pos=66),
 
-        'chi2':    tb.Float64Col(pos=65),
-        'G':       tb.Float64Col(pos=66),
-        'C':       tb.Float64Col(pos=67),
-        'V':       tb.Float64Col(pos=68),
-        'R_stat':  tb.Float64Col(pos=69),
+        'chi2':    tb.Float64Col(pos=67),
+        'G':       tb.Float64Col(pos=68),
+        'C':       tb.Float64Col(pos=69),
+        'V':       tb.Float64Col(pos=70),
+        'R_stat':  tb.Float64Col(pos=71),
 
-        'N':       tb.Int32Col(pos=70),
+        'N':       tb.Int32Col(pos=72),
 
-        'N_idotdot': tb.Int32Col(pos=71, shape=I),
-        'N_dotjdot': tb.Int32Col(pos=72, shape=J),
-        'N_dotdotk': tb.Int32Col(pos=73, shape=K),
+        'N_idotdot': tb.Int32Col(pos=73, shape=I),
+        'N_dotjdot': tb.Int32Col(pos=74, shape=J),
+        'N_dotdotk': tb.Int32Col(pos=75, shape=K),
 
-        'N_ijdot':   tb.Int32Col(pos=74, shape=(I, J)),
-        'N_idotk':   tb.Int32Col(pos=75, shape=(I, K)),
-        'N_dotjk':   tb.Int32Col(pos=76, shape=(J, K)),
+        'N_ijdot':   tb.Int32Col(pos=76, shape=(I, J)),
+        'N_idotk':   tb.Int32Col(pos=77, shape=(I, K)),
+        'N_dotjk':   tb.Int32Col(pos=78, shape=(J, K)),
 
-        'N_ijk':   tb.Int32Col(pos=77, shape=(I, J, K)),
-        'E_ijk':   tb.Float64Col(pos=78, shape=(I, J, K)),
+        'N_ijk':   tb.Int32Col(pos=79, shape=(I, J, K)),
+        'E_ijk':   tb.Float64Col(pos=80, shape=(I, J, K)),
         }
 
     if Rdscrt:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=79, shape=I)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=81, shape=I)
     else:
-        CT3D_TM["Rbounds"] = tb.Float64Col(pos=79, shape=I+1)
+        CT3D_TM["Rbounds"] = tb.Float64Col(pos=81, shape=I+1)
 
     if xdscrt:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=80, shape=J)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=82, shape=J)
     else:
-        CT3D_TM["xbounds"] = tb.Float64Col(pos=80, shape=J+1)
+        CT3D_TM["xbounds"] = tb.Float64Col(pos=82, shape=J+1)
 
     if ydscrt:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=81, shape=K)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=83, shape=K)
     else:
-        CT3D_TM["ybounds"] = tb.Float64Col(pos=81, shape=K+1)
+        CT3D_TM["ybounds"] = tb.Float64Col(pos=83, shape=K+1)
 
     CT3D_TM.update(extracols)
 
