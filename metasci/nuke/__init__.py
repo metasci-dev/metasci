@@ -63,7 +63,7 @@ def convolve_initial_fuel_form(stream, chem_form):
     with the fuel mass stream in the resultant isovec.
 
     Args:
-        * `stream` (MassStream [see BriPy]): An initial heavy metal mass stream.
+        * `stream` (MassStream [see bright]): An initial heavy metal mass stream.
         * `chem_form` (dict): The chemical form of the fuel.  For instance UOX 
           would be represented by ``{80160: 2.0, "IHM": 1.0}`` while a metal fuel
           would simply be ``{"IHM": 1.0}``.
