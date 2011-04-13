@@ -416,6 +416,86 @@ def sigma_f(iso, E_g=None, E_n=None, phi_n=None):
     return sigma_f_g
 
 
+def _chi(E):
+    """Calculates the fission neutron frequency at energy E.
+    This is based off of the values for U-235, which are 
+    representative for other isotopes.  See Lamarsh or 
+    'Comparison of prompt-fission neutron multiplicities and energy 
+    spectra for intermediate energy proton-and neutron-induced fission' 
+    --Oleg Batenkov, Georgy Boikov, Vilen Eismont, Mikhail Majorov, 
+    Sergey Soloviev, Jan Blomgren, and Walter Loveland.
+    """
+    chi_E = 0.453 * np.exp(-1.036*E) * np.sinh(np.sqrt(2.29*E))
+    return chi_E
+
+
+def chi(iso, E_g=None, E_n=None, phi_n=None):
+    """Calculates the neutron fission energy spectrum for an isotope for a new, lower resolution
+    group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
+
+    Args:
+        * iso (int or str): An isotope to calculate the fission energy spectrum for.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * chi_g (numpy array): A numpy array of the fission energy spectrum.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the fission XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    chi_g_iso_zz = 'chi_g_{0}'.format(iso_zz)
+
+    # Don't recalculate anything if you don't have to
+    if chi_g_iso_zz in xs_cache:
+        return xs_cache[chi_g_iso_zz]
+
+    # Get the the set of isotopes we know we need chi for.  
+    if 'fissionable_isos' not in xs_cache:
+        with tb.openFile(nuc_data, 'r') as f:
+            fi = set(f.root.neutron.xs_mg.fission.cols.iso_zz)
+        xs_chace['fissionable_isos'] = fi
+    fissionable_isos = xs_chace['fissionable_isos']
+
+    # Perform the group collapse on a continuous chi
+    nE = 101
+    G = len(E_g) - 1
+    chi_g = np.zeros(G, dtype=float)
+
+    if iso_zz in fissionable_isos:
+        for g in range(G):
+            E_space = np.logspace(np.log10(xs_cache['E_g'][g]), np.log10(xs_cache['E_g'][g+1]), nE)
+            dnumer = _chi(E_space)
+
+            numer = integrate.trapz(dnumer, E_space)
+            denom = (xs_cache['E_g'][g+1] - xs_cache['E_g'][g])
+
+            chi_g[g] = (numer / denom)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[chi_g_iso_zz] = chi_g
+
+    return chi_g
+
+
+
 def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     """Calculates the neutron absorption cross-section for an isotope for a new, lower resolution
     group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
