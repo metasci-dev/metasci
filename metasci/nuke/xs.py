@@ -50,6 +50,13 @@ class XSCache(dict):
             iso = int(m.group(1))
             self[key] = get_sigma_a_n(iso)
 
+        # Grab absorption reaction cross-sections from the file
+        m = re.match('sigma_rx_(.*?)_n_(\d+)', key)
+        if (m is not None) and (key not in self):
+            rx = m.group(1)
+            iso = int(m.group(2))
+            self[key] = get_sigma_reaction_n(iso, rx)
+
         # Grab scattering length from the file
         m = re.match('b_(\d+)', key)
         if (m is not None) and (key not in self):
@@ -604,6 +611,107 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     xs_cache[sigma_a_g_iso_zz] = sigma_a_g
 
     return sigma_a_g
+
+
+
+
+def sigma_reaction(iso, rx, E_g=None, E_n=None, phi_n=None):
+    """Calculates the neutron absorption reaction cross-section for an isotope for a new, lower resolution
+    group structure using a higher fidelity flux.  Note that g indexes G, n indexes N, and G < N.
+
+    Note: This always pulls the absorption reaction cross-section out of the nuc_data library.    
+
+    Args:
+        * iso (int or str): An isotope to calculate the absorption cross-section for.
+        * rx (str): Reaction key. ('gamma', 'alpha', 'p', etc.)
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * sigma_rx_g (numpy array): A numpy array of the collapsed absorption cross-section.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the absorption XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    sigma_rx_n_iso_zz = 'sigma_rx_{1}_n_{0}'.format(iso_zz, rx)
+    sigma_rx_g_iso_zz = 'sigma_rx_{1}_g_{0}'.format(iso_zz, rx)
+
+    # Don't recalculate anything if you don't have to
+    if sigma_rx_g_iso_zz in xs_cache:
+        return xs_cache[sigma_rx_g_iso_zz]
+    else:
+        sigma_rx_n = xs_cache[sigma_rx_n_iso_zz]
+
+    # Perform the group collapse, knowing that the right data is in the cache
+    sigma_rx_g = partial_group_collapse(sigma_rx_n)
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_rx_g_iso_zz] = sigma_rx_g
+
+    return sigma_rx_g
+
+
+
+
+def metastable_ratio(iso, rx, E_g=None, E_n=None, phi_n=None):
+    """Calculates the ratio between a reaction that leaves the nuclide in a metastable state
+    and the equivalent reaction that leaves the nuclide in the ground state.  This allows the 
+    calculation of metastable cross-sections via sigma_ms = ratio * sigma_ground.
+
+    Note: that g indexes G, n indexes N, and G < N.
+
+    Note: This always pulls the absorption reaction cross-sections out of the nuc_data library.    
+
+    Args:
+        * iso (int or str): An isotope to calculate the absorption cross-section for.
+        * rx (str): Reaction key. ('gamma', 'alpha', 'p', etc.)  Excited state keys are 
+          not allowed.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * ratio_rx_g (numpy array): A numpy array of the ratio of the metastable cross section
+          for a reaction to the ground state reaction.
+    """
+    # Get the cross-sections
+    sigma_rx = sigma_reaction(iso, rx, E_g, E_n, phi_n)
+    sigma_rx_x = sigma_reaction(iso, rx + '_x', E_g, E_n, phi_n)
+
+    # Get the ratio
+    ratio_rx_g = sigma_rx_x / sigma_rx
+    ratio_rx_g[ratio_rx_g < 0.0] = 0.0
+    ratio_rx_g[ratio_rx_g == np.inf] = 0.0
+
+    return ratio_rx_g
+
+
+
+
 
 #
 # Scattering cross section
