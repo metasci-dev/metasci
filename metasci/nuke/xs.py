@@ -182,6 +182,64 @@ def get_sigma_a_n(iso):
     return sigma_a_n
 
 
+
+ABSORPTION_RX = set(["", 'np *', 'a  *', 'h  *', '2p *', '3n *', 'd  *', 'np/d', 
+                     'na', '*', 'nd', 'g  *', '3n', 'np', 'nt', 't', 'nt *', 
+                     'x  *', '4n *', 'na *', 'nd *', 't  *', 'a', 'c', '2p', 'd', 
+                     'g', 'h', 'n', '4n', 'p', 'n  *', '2a', '2n *', 'x', '2n', 
+                     'nh *', 'p  *'])
+
+ABSORPTION_RX_MAP = {
+    'neutron': 'n',
+    'gamma': 'g', 
+    'alpha': 'a',
+    'proton': 'p',
+    }
+
+def get_sigma_reaction_n(iso, rx):
+    """Grabs an isotope's absorption reaction cross-section from the nuc_data library.
+
+    Args:
+        * iso (zzaaam): Isotope name, in appropriate form.
+        * rx (str): Reaction key. ('gamma', 'alpha', 'p', etc.)
+
+    Returns:
+        * sigma_rx_n (numpy array): This isotope's absorption reaction cross-section pulled from the
+          database library file.  If not present in the library, a zero-array is returned.
+    """
+    # munge the reaction rate
+    if rx not in ABSORPTION_RX:
+        while any([(key in rx) for key in ABSORPTION_RX_MAP]):
+            for key, value in ABSORPTION_RX_MAP.items():
+                rx = rx.replace(key, value)
+
+    if '_x' in rx:
+        if len(rx) == 3:
+            rx = rx.replace('_x', '  *')
+        else:
+            rx = rx.replace('_x', ' *')
+
+    if rx not in ABSORPTION_RX:
+        msg = "the reaction '{rx}' is not valid.".format(rx=rx)
+        raise IndexError(msg)
+
+    # Read in the data
+    with tb.openFile(nuc_data, 'r') as f:
+        N = f.root.neutron.xs_mg.absorption.coldescrs['xs'].shape[0]
+        rows = [np.array(row['xs']) for row in 
+                f.root.neutron.xs_mg.absorption.where("(from_iso_zz == {0}) & (reaction_type == '{1}')".format(iso, rx))]
+
+    if len(rows) == 0:
+        # No absportion, return zero-array
+        sigma_rx_n = np.zeros(N, dtype=float)
+    else:
+        rows = np.array(rows)
+        sigma_rx_n = rows.sum(axis=0)
+
+    return sigma_rx_n
+
+
+
 def get_b(iso):
     """Grabs an isotope's neutron scattering length from the nuc_data library.
     Because the coherent and incoherent lenghts are in general complex, the 
@@ -528,7 +586,7 @@ def sigma_a(iso, E_g=None, E_n=None, phi_n=None):
     if phi_n is not None:
         xs_cache['phi_n'] = phi_n
 
-    # Get the fission XS
+    # Get the absorption XS
     iso_zz = isoname.mixed_2_zzaaam(iso)
     sigma_a_n_iso_zz = 'sigma_a_n_{0}'.format(iso_zz)
     sigma_a_g_iso_zz = 'sigma_a_g_{0}'.format(iso_zz)
