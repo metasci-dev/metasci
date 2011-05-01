@@ -536,8 +536,8 @@ def chi(iso, E_g=None, E_n=None, phi_n=None):
     if 'fissionable_isos' not in xs_cache:
         with tb.openFile(nuc_data, 'r') as f:
             fi = set(f.root.neutron.xs_mg.fission.cols.iso_zz)
-        xs_chace['fissionable_isos'] = fi
-    fissionable_isos = xs_chace['fissionable_isos']
+        xs_cache['fissionable_isos'] = fi
+    fissionable_isos = xs_cache['fissionable_isos']
 
     # Perform the group collapse on a continuous chi
     nE = 101
