@@ -541,7 +541,7 @@ def chi(iso, E_g=None, E_n=None, phi_n=None):
 
     # Perform the group collapse on a continuous chi
     nE = 101
-    G = len(E_g) - 1
+    G = len(xs_cache['E_g']) - 1
     chi_g = np.zeros(G, dtype=float)
 
     if iso_zz in fissionable_isos:
