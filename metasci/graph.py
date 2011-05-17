@@ -249,7 +249,7 @@ def SimpleGraph(x, y, **kwgraph):
 ### Nuke Grpahs ###
 ###################
 
-def StairStepEnergy(data, energy_bins=[], G=3, elower=(10.0**-9), eupper=10.0, **kwgraph):
+def StairStepEnergy(data, energy_bins=None, G=3, elower=(10.0**-9), eupper=10.0, **kwgraph):
     """Plots nuclear data which is separated into G energy bins.
 
     Args:
@@ -269,7 +269,7 @@ def StairStepEnergy(data, energy_bins=[], G=3, elower=(10.0**-9), eupper=10.0, *
 
     kwgraph = set_defaults(**kwgraph)
 
-    if not energy_bins:
+    if 0 == len(energy_bins):
         if kwgraph['scale'] == 'linear':
             energy_bins = LinearUniformBins(elower, eupper, G)
         elif kwgraph['scale'] == 'log':
