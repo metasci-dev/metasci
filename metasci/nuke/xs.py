@@ -557,6 +557,9 @@ def chi(iso, E_g=None, E_n=None, phi_n=None):
 
             chi_g[g] = (numer / denom)
 
+    # renormalize chi
+    chi_g = chi_g / chi_g.sum()
+
     # Put this value back into the cache, with the appropriate label
     xs_cache[chi_g_iso_zz] = chi_g
 
