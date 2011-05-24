@@ -712,6 +712,7 @@ def metastable_ratio(iso, rx, E_g=None, E_n=None, phi_n=None):
     ratio_rx_g = sigma_rx_x / sigma_rx
     ratio_rx_g[ratio_rx_g < 0.0] = 0.0
     ratio_rx_g[ratio_rx_g == np.inf] = 0.0
+    ratio_rx_g[np.isnan(ratio_rx_g)] = 0.0
 
     return ratio_rx_g
 
