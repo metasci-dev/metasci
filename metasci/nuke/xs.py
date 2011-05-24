@@ -1126,7 +1126,7 @@ def sigma_s(iso, T, E_g=None, E_n=None, phi_n=None):
         \\sigma_{s, g} = \\sum_{h} \\sigma_{s, g\\to h} 
 
     Args:
-        * iso (int or str): An isotope to calculate the fission cross-section for.
+        * iso (int or str): An isotope to calculate the scattering cross-section for.
         * T (float): Tempurature of the target material [kelvin].
 
     Keyword Args:
@@ -1172,4 +1172,65 @@ def sigma_s(iso, T, E_g=None, E_n=None, phi_n=None):
     xs_cache[sigma_s_g_iso_zz_T] = sig_s_g
 
     return sig_s_g
+
+
+
+def sigma_t(iso, T=300.0, E_g=None, E_n=None, phi_n=None):
+    """Calculates the total neutron cross-section for an isotope. 
+
+    .. math::
+        \\sigma_{s, g} = \\sum_{h} \\sigma_{s, g\\to h} 
+
+    Args:
+        * iso (int or str): An isotope to calculate the total cross-section for.
+
+    Keyword Args:
+        If any of these are None-valued, values from the cache are used.
+
+        * T (float): Tempurature of the target material [kelvin].
+        * E_g (sequence of floats): New, lower fidelity energy group structure [MeV]
+          that is of length G+1. Ordered from lowest-to-highest energy.
+        * E_n (sequence of floats): higher resolution energy group structure [MeV]
+          that is of length N+1. Ordered from lowest-to-highest energy.
+        * phi_n (sequence of floats): The high-fidelity flux [n/cm^2/s] to collapse the fission 
+          cross-section over.  Length N.  Ordered from lowest-to-highest energy.
+
+    Returns:
+        * sig_t_g (numpy array): A numpy array of the total cross-section.
+    """
+    # Ensure that the low-fidelity group structure is in the cache
+    if E_n is not None:
+        xs_cache['E_n'] = E_n
+
+    if E_g is not None:
+        xs_cache['E_g'] = E_g
+
+    if phi_n is not None:
+        xs_cache['phi_n'] = phi_n
+
+    # Get the total XS
+    iso_zz = isoname.mixed_2_zzaaam(iso)
+    sigma_a_g_iso_zz = 'sigma_a_g_{0}'.format(iso_zz)
+    sigma_s_g_iso_zz_T = 'sigma_t_g_{0}_{1}'.format(iso_zz, T)
+    sigma_t_g_iso_zz_T = 'sigma_t_g_{0}_{1}'.format(iso_zz, T)
+
+    # Don't recalculate anything if you don't have to
+    if sigma_t_g_iso_zz_T in xs_cache:
+        return xs_cache[sigma_t_g_iso_zz_T]
+
+    # This calculation requires the abosorption cross-section
+    if sigma_a_g_iso_zz not in xs_cache:
+        xs_cache[sigma_a_g_iso_zz] = sigma_a(iso, E_g, E_n, phi_n)
+
+    # This calculation requires the scattering cross-section
+    if sigma_s_g_iso_zz_T not in xs_cache:
+        xs_cache[sigma_s_g_iso_zz_T] = sigma_s(iso, T, E_g, E_n, phi_n)
+
+    # Sum over all h indeces
+    sig_t_g = xs_cache[sigma_a_g_iso_zz] + xs_cache[sigma_s_g_iso_zz_T]
+
+    # Put this value back into the cache, with the appropriate label
+    xs_cache[sigma_t_g_iso_zz_T] = sig_t_g
+
+    return sig_t_g
 
