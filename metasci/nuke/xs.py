@@ -539,12 +539,15 @@ def chi(iso, E_g=None, E_n=None, phi_n=None):
         xs_cache['fissionable_isos'] = fi
     fissionable_isos = xs_cache['fissionable_isos']
 
+    if (iso_zz not in fissionable_isos) and (86 <= iso_zz/10000):
+        fissionable_isos.add(iso_zz)
+
     # Perform the group collapse on a continuous chi
     nE = 101
     G = len(xs_cache['E_g']) - 1
     chi_g = np.zeros(G, dtype=float)
 
-    if iso_zz in fissionable_isos:
+    if (iso_zz in fissionable_isos):
         for g in range(G):
             E_space = np.logspace(np.log10(xs_cache['E_g'][g]), np.log10(xs_cache['E_g'][g+1]), nE)
             dnumer = _chi(E_space)
