@@ -201,6 +201,10 @@ ABSORPTION_RX_MAP = {
     'gamma': 'g', 
     'alpha': 'a',
     'proton': 'p',
+    'trit': 't',
+    'triton': 't',
+    'deut': 'd',
+    'deuteron': 'd',
     }
 
 def get_sigma_reaction_n(iso, rx):
