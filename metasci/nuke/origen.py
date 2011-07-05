@@ -343,14 +343,21 @@ def parse_tape6(name = "TAPE6.OUT"):
                 table_type = None
 
             elif in_table:
+                ind = 0
                 try:
                     iso = isoname.LLAAAM_2_zzaaam(ls[0])
+                    ind = 1
                 except:
                     try:
                         iso = isoname.LLAAAM_2_zzaaam(ls[0] + ls[1])
+                        ind = 2
                     except:
                         continue
-                results[table_key][table_type]["data"][iso] = float(ls[-1])
+
+                #results[table_key][table_type]["data"][iso] = float(ls[-1])
+                if iso not in results[table_key][table_type]["data"]:
+                    results[table_key][table_type]["data"][iso] = []
+                results[table_key][table_type]["data"][iso].append(np.array(ls[ind:], dtype=float))
             else:
                 continue
 
